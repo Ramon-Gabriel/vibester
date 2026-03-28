@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/utils/colors.dart';
+import 'package:mobile/widgets/primary_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -134,19 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: SizedBox(
                   width: 350,
                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(colorAmbar),
-                    ),
-                    child: Text(
-                      'Entrar',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                  child: PrimaryButton(label: 'Entrar', onPressed: () {}),
                 ),
               ),
 

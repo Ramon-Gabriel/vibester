@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/screens/login_screen.dart';
+import 'package:mobile/screens/register_screen.dart';
 import 'package:mobile/utils/colors.dart';
 
 class InitialScreen extends StatefulWidget {
@@ -72,9 +73,7 @@ class _InitialScreenState extends State<InitialScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => const Placeholder(),
-                      ),
+                      MaterialPageRoute(builder: (context) => RegisterScreen()),
                     );
                   },
                   child: Text(

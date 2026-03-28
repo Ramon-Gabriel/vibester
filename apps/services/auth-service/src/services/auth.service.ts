@@ -1,3 +1,4 @@
+/*
 import { AppError } from "../middlewares/error.middleware";
 import { userRepository } from "../repositories/user.repository";
 import { hashUtil } from "../utils/hash.util";
@@ -6,24 +7,6 @@ import { profileUtil } from "../utils/profile.util";
 import { LoginDTO, RegisterDTO } from "../dtos/auth.dto";
 
 export const authService = {
-    async register(data: RegisterDTO) {
-        const existingUser = await userRepository.findByEmail(data.email);
-        if (existingUser) {
-            throw new AppError("Email já cadastrado", 409);
-        }
-
-        const passwordHash = await hashUtil.hash(data.password);
-
-        const user = await userRepository.create({
-            ...data,
-            password: passwordHash,
-        })
-
-        const accessToken = jwtUtil.generateAccess(user.id);
-        const refreshToken = jwtUtil.generateRefresh(user.id);
-
-        return { accessToken, refreshToken };
-    },
 
     async login(data: LoginDTO) {
         const user = await userRepository.findByEmail(data.email);
@@ -61,3 +44,4 @@ export const authService = {
     }
 
 }
+*/

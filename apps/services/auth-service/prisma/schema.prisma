@@ -5,18 +5,21 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model User {
+model Access {
   id           String   @id @default(uuid())
+  accountId    String   @unique
+  username     String   @unique
   email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  @@map("users")
+  @@map("accesses")
 }

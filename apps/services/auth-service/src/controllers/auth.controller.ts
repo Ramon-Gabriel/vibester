@@ -1,3 +1,4 @@
+/*
 import { Request, Response, NextFunction } from "express";
 import { responseUtil } from "../utils/response.util";
 import { AuthRequest } from "../middlewares/auth.middleware";
@@ -41,3 +42,4 @@ export const authController = {
         }
     }
 }
+    */

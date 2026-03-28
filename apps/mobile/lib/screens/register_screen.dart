@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/screens/email_confirm_screen.dart';
 import 'package:mobile/utils/colors.dart';
+import 'package:mobile/widgets/primary_button.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -179,18 +181,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: SizedBox(
                   width: 350,
                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(colorAmbar),
-                    ),
-                    child: Text(
-                      'Entrar',
-                      style: GoogleFonts.inter(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                  child: PrimaryButton(
+                    label: 'Entrar',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EmailConfirmScreen(),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ),

@@ -6,6 +6,12 @@ export interface RegisterInputInterface {
     bornAt: Date;
 }
 
+export interface LoginInputInterface {
+    email?: string;
+    username?: string;
+    password: string; 
+}
+
 export interface RegisterOutputInterface {
     id: string;
     // token: string;
@@ -15,4 +21,10 @@ export interface RegisterOutputInterface {
     bornAt: Date;
     createdAt: Date;
     updatedAt: Date;
+}
+
+export interface LoginOutputInterface {
+    id: string;
+    token: string;
+    accountId: string;
 }

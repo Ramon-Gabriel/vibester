@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/screens/profile_editing_screen.dart';
 import 'package:mobile/utils/colors.dart';
 import 'package:mobile/widgets/primary_button.dart';
 import 'package:pinput/pinput.dart';
@@ -105,7 +106,15 @@ class _EmailConfirmScreenState extends State<EmailConfirmScreen> {
 
           SizedBox(height: 50),
 
-          PrimaryButton(label: 'Verificar e-mail', onPressed: () {}),
+          PrimaryButton(
+            label: 'Verificar e-mail',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfileEditingScreen()),
+              );
+            },
+          ),
 
           SizedBox(height: 12),
         ],

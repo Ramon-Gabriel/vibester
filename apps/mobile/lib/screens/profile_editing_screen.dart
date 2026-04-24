@@ -19,7 +19,7 @@ class _ProfileEditingScreenState extends State<ProfileEditingScreen> {
     return Scaffold(
       backgroundColor: Color(colorDarkGrey),
       appBar: AppBar(
-        title: Text('Informacoes pessoais'),
+        title: Text('Informações pessoais'),
         backgroundColor: Color(colorDarkGrey),
         foregroundColor: Colors.white,
         titleTextStyle: GoogleFonts.inter(fontSize: 20),

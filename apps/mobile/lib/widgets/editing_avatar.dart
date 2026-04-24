@@ -79,7 +79,7 @@ class _EditableAvatarState extends State<EditableAvatar> {
               radius: 48,
               backgroundImage: _provider,
               child: _provider == null
-                  ? Icon(Icons.person, color: Colors.white, size: 50)
+                  ? Icon(Icons.camera_alt, color: Colors.white, size: 50)
                   : null,
             ),
           ),

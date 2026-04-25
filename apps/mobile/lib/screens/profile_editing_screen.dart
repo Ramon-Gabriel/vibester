@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/screens/user_interests_screen.dart';
 import 'package:mobile/utils/colors.dart';
 import 'package:mobile/widgets/date_picker_field.dart';
 import 'package:mobile/widgets/editing_avatar.dart';
@@ -35,7 +36,15 @@ class _ProfileEditingScreenState extends State<ProfileEditingScreen> {
           SizedBox(height: 25),
           PrimaryTextField(labelText: 'Bio', height: 90),
           SizedBox(height: 25),
-          PrimaryButton(label: 'Cadastrar', onPressed: () {}),
+          PrimaryButton(
+            label: 'Cadastrar',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserInterestsScreen()),
+              );
+            },
+          ),
         ],
       ),
     );

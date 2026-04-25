@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/models/interest_model.dart';
@@ -88,7 +90,7 @@ class _UserInterestsScreenState extends State<UserInterestsScreen> {
                 );
               }).toList(),
             ),
-            SizedBox(height: 400),
+            SizedBox(height: Platform.isIOS ? 300 : 400),
             SizedBox(
               width: double.infinity,
               child: PrimaryButton(label: 'Continuar', onPressed: () {}),

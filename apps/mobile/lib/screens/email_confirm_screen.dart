@@ -6,13 +6,31 @@ import 'package:mobile/widgets/primary_button.dart';
 import 'package:pinput/pinput.dart';
 
 class EmailConfirmScreen extends StatefulWidget {
-  const EmailConfirmScreen({super.key});
+  final VoidCallback? onEmailConfirmed;
+  const EmailConfirmScreen({
+    this.onEmailConfirmed,
+    super.key
+  });
 
   @override
   State<EmailConfirmScreen> createState() => _EmailConfirmScreenState();
 }
 
 class _EmailConfirmScreenState extends State<EmailConfirmScreen> {
+
+  void _aoVerificar() {
+    if (!context.mounted) return;
+
+    if (widget.onEmailConfirmed != null) {
+      widget.onEmailConfirmed!();
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProfileEditingScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final defaultTheme = PinTheme(
@@ -109,10 +127,7 @@ class _EmailConfirmScreenState extends State<EmailConfirmScreen> {
           PrimaryButton(
             label: 'Verificar e-mail',
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfileEditingScreen()),
-              );
+              _aoVerificar();
             },
           ),
 

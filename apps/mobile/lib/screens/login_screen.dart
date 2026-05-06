@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/screens/home_screen.dart';
 import 'package:mobile/utils/colors.dart';
 import 'package:mobile/widgets/primary_button.dart';
 import 'package:mobile/screens/recover_password_screen.dart';
@@ -136,7 +137,17 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: SizedBox(
                   width: 350,
                   height: 50,
-                  child: PrimaryButton(label: 'Entrar', onPressed: () {}),
+                  child: PrimaryButton(
+                    label: 'Entrar',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
 

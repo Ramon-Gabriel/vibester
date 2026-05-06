@@ -1,8 +1,10 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 import { CreateProfileService } from "../services/createProfile.service.js";
+import { EditProfileService } from "../services/editProfile.service.js";
 import { CreateProfileInput, UpdateAvatarInput, UpdateBioInput } from "../types/profile.types.js";
 
 const profileService = new CreateProfileService();
+const editProfileService = new EditProfileService();
 
 export async function profileRoutes(app: FastifyInstance) {
   app.post("/profile", async (request: FastifyRequest<{ Body: CreateProfileInput }>, reply: FastifyReply) => {
@@ -17,7 +19,7 @@ export async function profileRoutes(app: FastifyInstance) {
 
   app.put("/profile/bio", async (request: FastifyRequest<{ Body: UpdateBioInput }>, reply: FastifyReply) => {
     try {
-      const profile = await profileService.updateBio(request.body);
+      const profile = await editProfileService.updateBio(request.body);
       return reply.status(200).send(profile);
     } catch (error) {
       request.log.error(error);
@@ -27,7 +29,7 @@ export async function profileRoutes(app: FastifyInstance) {
 
   app.put("/profile/avatar", async (request: FastifyRequest<{ Body: UpdateAvatarInput }>, reply: FastifyReply) => {
     try {
-      const profile = await profileService.updateAvatar(request.body);
+      const profile = await editProfileService.updateAvatar(request.body);
       return reply.status(200).send(profile);
     } catch (error) {
       request.log.error(error);
@@ -37,7 +39,7 @@ export async function profileRoutes(app: FastifyInstance) {
 
   app.post("/profile/followers/increase", async (request: FastifyRequest<{ Body: { userID: string } }>, reply: FastifyReply) => {
     try {
-      const profile = await profileService.increaseFollower(request.body.userID);
+      const profile = await editProfileService.increaseFollower(request.body.userID);
       return reply.status(200).send(profile);
     } catch (error) {
       request.log.error(error);
@@ -47,7 +49,7 @@ export async function profileRoutes(app: FastifyInstance) {
 
   app.post("/profile/followers/decrease", async (request: FastifyRequest<{ Body: { userID: string } }>, reply: FastifyReply) => {
     try {
-      const profile = await profileService.decreaseFollower(request.body.userID);
+      const profile = await editProfileService.decreaseFollower(request.body.userID);
       return reply.status(200).send(profile);
     } catch (error) {
       request.log.error(error);

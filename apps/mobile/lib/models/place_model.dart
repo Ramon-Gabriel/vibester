@@ -2,8 +2,8 @@ class PlaceModel {
   final String nome;
   final int nivelMovimento;
   final String categoria;
-  final int avaliacao;
-  final int nivelPrecoMedio;
+  final double avaliacao;
+  final String nivelPrecoMedio;
 
   PlaceModel({
     required this.nome,

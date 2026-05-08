@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/screens/initial_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
@@ -13,6 +14,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(home: InitialScreen());
+    return MaterialApp(
+      theme: ThemeData(textTheme: GoogleFonts.interTextTheme()),
+      home: InitialScreen(),
+    );
   }
 }

@@ -70,8 +70,8 @@ class _EditableAvatarState extends State<EditableAvatar> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: Color(colorAmbar).withAlpha(150), // 👈 cor da borda
-                width: 2, // 👈 espessura
+                color: Color(colorAmbar).withAlpha(150),
+                width: 2,
               ),
             ),
             child: CircleAvatar(

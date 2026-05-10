@@ -17,6 +17,20 @@ export class RegisterService {
                 passwordHash,
             }
         });
+
+        try {
+            await fetch('http://localhost:3002/api/users/profile', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    userID: account.accountId,
+                })
+            });
+        } catch (err) {
+            console.error('Failed to create profile in user-service', err);
+        }
         
         return {
             id: account.id,

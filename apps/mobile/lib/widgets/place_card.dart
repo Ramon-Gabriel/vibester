@@ -57,7 +57,13 @@ class PlaceCard extends StatelessWidget {
                         PriceIndicator(nivel: place.nivelPrecoMedio),
                       ],
                     ),
-                    Text('Movimento'),
+                    Text(
+                      'Movimento',
+                      style: TextStyle(
+                        color: Colors.white.withAlpha(150),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     MovimentoIndicator(nivel: place.nivelMovimento),
                   ],
                 ),

@@ -13,13 +13,13 @@ class CategoryIndicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: Color(colorAmbar).withAlpha(50),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color(colorBrasa).withAlpha(150)),
+        border: Border.all(color: Color(colorAmbar).withAlpha(150)),
       ),
       child: Text(
         categoria,
         style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: Color(colorBrasa),
+          color: Color(colorAmbar),
           fontSize: 10,
         ),
       ),

@@ -149,7 +149,10 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
                       children: [
                         TextSpan(
                           text: 'ao vivo!',
-                          style: TextStyle(color: Color(colorAmbar)),
+                          style: TextStyle(
+                            color: Color(colorAmbar),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),

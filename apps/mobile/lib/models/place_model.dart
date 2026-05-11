@@ -4,6 +4,8 @@ class PlaceModel {
   final String categoria;
   final double avaliacao;
   final String nivelPrecoMedio;
+  final String bio;
+  final String endereco;
 
   PlaceModel({
     required this.nome,
@@ -11,5 +13,7 @@ class PlaceModel {
     required this.categoria,
     required this.avaliacao,
     required this.nivelPrecoMedio,
+    required this.bio,
+    required this.endereco,
   });
 }

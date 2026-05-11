@@ -11,7 +11,7 @@ class CategoryIndicator extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Color(colorAmbar).withAlpha(50),
+        color: Color(colorNoturno).withAlpha(50),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Color(colorAmbar).withAlpha(150)),
       ),

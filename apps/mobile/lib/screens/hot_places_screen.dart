@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/models/place_model.dart';
+import 'package:mobile/screens/place_detail_screen.dart';
 import 'package:mobile/utils/colors.dart';
 import 'package:mobile/widgets/place_card.dart';
 
@@ -18,6 +19,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Café',
       avaliacao: 4.0,
       nivelPrecoMedio: 'alto',
+      bio:
+          'O point favorito dos trabalhadores do centro. Café coado na hora, wi-fi rápido e aquela energia de segunda de manhã o dia todo.',
+      endereco: 'Av. Presidente Vargas, 142',
     ),
     PlaceModel(
       nome: 'Filin',
@@ -25,6 +29,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Balada',
       avaliacao: 4.9,
       nivelPrecoMedio: 'medio',
+      bio:
+          'A balada que não precisa de apresentação. Line-ups de peso, pista sempre lotada e som que você sente no peito.',
+      endereco: 'R. das Palmeiras, 87',
     ),
     PlaceModel(
       nome: 'Churrasquero House',
@@ -32,6 +39,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Restaurante',
       avaliacao: 4.7,
       nivelPrecoMedio: 'baixo',
+      bio:
+          'Churrasco de verdade, sem frescura e sem preço salgado. Aqui a brasa nunca apaga e a fila anda rápido.',
+      endereco: 'R. Tiradentes, 560',
     ),
     PlaceModel(
       nome: 'Porão Bar',
@@ -39,6 +49,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Bar',
       avaliacao: 4.2,
       nivelPrecoMedio: 'alto',
+      bio:
+          'Escondido no subsolo, o Porão tem drinques autorais, luz baixa e aquela vibe de quem sabe o que está fazendo.',
+      endereco: 'R. Sete de Setembro, 34',
     ),
     PlaceModel(
       nome: 'Sushi Zen',
@@ -46,6 +59,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Japonês',
       avaliacao: 4.8,
       nivelPrecoMedio: 'alto',
+      bio:
+          'Experiência japonesa autêntica. Cada peça é montada com precisão e o ambiente convida ao silêncio e à boa comida.',
+      endereco: 'Av. das Nações, 210',
     ),
     PlaceModel(
       nome: 'Pizza Roma',
@@ -53,6 +69,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Pizzaria',
       avaliacao: 4.3,
       nivelPrecoMedio: 'medio',
+      bio:
+          'Massa fina, forno a lenha e receitas que viajaram do interior da Itália até aqui. Simples assim, gostoso assim.',
+      endereco: 'R. Floriano Peixoto, 415',
     ),
     PlaceModel(
       nome: 'Boteco do Léo',
@@ -60,6 +79,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Bar',
       avaliacao: 4.1,
       nivelPrecoMedio: 'baixo',
+      bio:
+          'O Léo conhece todo mundo pelo nome. Cerveja gelada, petisco farto e aquela conversa que se estende até depois da meia-noite.',
+      endereco: 'R. das Acácias, 19',
     ),
     PlaceModel(
       nome: 'La Trattoria',
@@ -67,6 +89,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Italiano',
       avaliacao: 4.6,
       nivelPrecoMedio: 'alto',
+      bio:
+          'Massas frescas feitas no dia, carta de vinhos cuidadosa e um salão que faz qualquer jantar parecer especial.',
+      endereco: 'Av. Brasil, 788',
     ),
     PlaceModel(
       nome: 'Hamburgueria 404',
@@ -74,6 +99,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Hamburgueria',
       avaliacao: 4.4,
       nivelPrecoMedio: 'medio',
+      bio:
+          'Referência não encontrada? Aqui não. Os hambúrgueres são artesanais, os combos são absurdos e o lugar é pequeno de propósito.',
+      endereco: 'R. Marechal Deodoro, 301',
     ),
     PlaceModel(
       nome: 'Bistrô do Porto',
@@ -81,6 +109,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Bistrô',
       avaliacao: 4.5,
       nivelPrecoMedio: 'medio',
+      bio:
+          'Cardápio enxuto que muda com a estação. Ambiente aconchegante para quem quer comer bem sem pressa.',
+      endereco: 'Av. Beira Rio, 55',
     ),
     PlaceModel(
       nome: 'Tapiocaria Sol',
@@ -88,6 +119,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Lanchonete',
       avaliacao: 4.0,
       nivelPrecoMedio: 'baixo',
+      bio:
+          'Tapiocas recheadas na hora, suco natural e aquele café da manhã que faz a diferença antes de encarar o dia.',
+      endereco: 'R. Independência, 123',
     ),
     PlaceModel(
       nome: 'Churrascaria Gaúcha',
@@ -95,6 +129,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Churrascaria',
       avaliacao: 4.8,
       nivelPrecoMedio: 'alto',
+      bio:
+          'Rodízio completo com cortes nobres e gaúchos de verdade na churrasqueira. Venha com fome e saia feliz.',
+      endereco: 'Av. Paraná, 940',
     ),
     PlaceModel(
       nome: 'Empório Vegano',
@@ -102,6 +139,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Vegano',
       avaliacao: 4.3,
       nivelPrecoMedio: 'alto',
+      bio:
+          'Culinária plant-based que convence até quem não é vegano. Ingredientes orgânicos, sabor sem concessão.',
+      endereco: 'R. das Flores, 77',
     ),
     PlaceModel(
       nome: 'Bar da Esquina',
@@ -109,6 +149,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Bar',
       avaliacao: 3.9,
       nivelPrecoMedio: 'medio',
+      bio:
+          'Aquele bar de bairro que todo mundo tem saudade. Jogo na TV, mesa de plástico e doses generosas.',
+      endereco: 'R. Almirante Barroso, 228',
     ),
     PlaceModel(
       nome: 'Doceria Mel',
@@ -116,6 +159,9 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
       categoria: 'Doceria',
       avaliacao: 4.7,
       nivelPrecoMedio: 'baixo',
+      bio:
+          'Doces artesanais feitos com amor e receitas de família. Um pedaço de bolo aqui vale mais que qualquer sobremesa chique.',
+      endereco: 'R. Dom Pedro II, 11',
     ),
   ];
 
@@ -161,7 +207,18 @@ class _HotPlacesScreenState extends State<HotPlacesScreen> {
               ),
             );
           }
-          return PlaceCard(place: places[index - 1]); // -1 por causa do header
+          return PlaceCard(
+            place: places[index - 1],
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      PlaceDetailScreen(place: places[index - 1]),
+                ),
+              );
+            },
+          );
         },
       ),
     );

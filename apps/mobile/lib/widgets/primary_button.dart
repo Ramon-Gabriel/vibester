@@ -17,14 +17,36 @@ class PrimaryButton extends StatelessWidget {
     return SizedBox(
       width: 350,
       height: 50,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: Color(colorAmbar)),
-        child: Text(
-          label,
-          style: GoogleFonts.inter(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Color(colorAmbar).withOpacity(0.5),
+              blurRadius: 12,
+              spreadRadius: 4,
+            ),
+            BoxShadow(
+              color: Color(colorAmbar).withOpacity(0.3),
+              blurRadius: 20,
+              spreadRadius: 2,
+            ),
+            BoxShadow(
+              color: Color(colorAmbar).withOpacity(0.15),
+              blurRadius: 40,
+              spreadRadius: 16,
+            ),
+          ],
+        ),
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(backgroundColor: Color(colorAmbar)),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
         ),
       ),

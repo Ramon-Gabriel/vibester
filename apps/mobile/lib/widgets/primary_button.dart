@@ -24,17 +24,17 @@ class PrimaryButton extends StatelessWidget {
             BoxShadow(
               color: Color(colorAmbar).withOpacity(0.5),
               blurRadius: 12,
-              spreadRadius: 4,
+              spreadRadius: 1,
             ),
             BoxShadow(
               color: Color(colorAmbar).withOpacity(0.3),
               blurRadius: 20,
-              spreadRadius: 2,
+              spreadRadius: 1,
             ),
             BoxShadow(
               color: Color(colorAmbar).withOpacity(0.15),
-              blurRadius: 40,
-              spreadRadius: 16,
+              blurRadius: 30,
+              spreadRadius: 1,
             ),
           ],
         ),

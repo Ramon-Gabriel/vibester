@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/widgets/divider.dart';
 
 class PlaceStatsBar extends StatelessWidget {
   final String seguidores;
@@ -18,7 +19,7 @@ class PlaceStatsBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatItem(value: seguidores, label: 'SEGUIDORES'),
-          _Divider(),
+          MyDivider(height: 36, width: 1),
           _StatItem(
             value: avaliacao.toString(),
             label: 'AVALIAÇÕES',
@@ -53,13 +54,13 @@ class _StatItem extends StatelessWidget {
               value,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
             ),
             if (showStar) ...[
               const SizedBox(width: 4),
-              const Icon(Icons.star, color: Colors.deepOrange, size: 18),
+              const Icon(Icons.star, color: Colors.yellow, size: 18),
             ],
           ],
         ),
@@ -75,12 +76,5 @@ class _StatItem extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-class _Divider extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 1, height: 36, color: Colors.white24);
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mobile/models/place_model.dart';
+import 'package:mobile/screens/event_list_screen.dart';
 import 'package:mobile/utils/colors.dart';
 import 'package:mobile/widgets/category_indicator.dart';
 import 'package:mobile/widgets/divider.dart';
@@ -147,7 +148,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
                 controller: _tabController,
                 children: [
                   Center(child: Text('Destaques')),
-                  Center(child: Text('Eventos')),
+                  EventListScreen(),
                   Center(child: Text('Avaliacoes')),
                 ],
               ),

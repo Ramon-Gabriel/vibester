@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile/models/event_model.dart';
 import '../utils/colors.dart';
 //import 'package:google_fonts/google_fonts.dart';
 
 class EventDetailScreen extends StatefulWidget {
-  const EventDetailScreen({super.key});
+  const EventDetailScreen({super.key, required EventModel event});
 
   @override
   State<EventDetailScreen> createState() => _EventDetailScreenState();
@@ -29,6 +30,8 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                 //Imagen ocupando todo o espaço desse SizedBox
                 Positioned.fill(
                   child: Image.network(
+
+                    //Trocar URL por variavel com imagem pega da API
                     'https://img.tribunahoje.com/E78VBhgfhxsCQoOHZfbjl-M5nLY=/840x520/smart/s3.tribunahoje.com/uploads/imagens/livinho-800x450jpg.avif',
                     fit: BoxFit.cover,
                   ),

@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Establishment {
+  id             String @id @default(cuid())
+  name           String
+  photoUrl       String
+  bannerUrl      String
+  category       String
+  priceIndicator String
+  averageRating  Float  @default(0.0)
+  latitude       Float
+  longitude      Float
+
+  @@map("establishments")
+}

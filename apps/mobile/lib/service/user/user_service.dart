@@ -26,6 +26,18 @@ class UploadUrlResult {
 }
 
 class UserService {
+  // O auth-service responde erro como {"error": "..."} e o user-service como
+  // {"message": "..."}. Lendo so um dos dois, toda falha virava a mensagem
+  // generica de fallback e escondia a causa real do erro.
+  static String _mensagemDeErro(DioException e, String fallback) {
+    final data = e.response?.data;
+    if (data is Map) {
+      final detalhe = data['error'] ?? data['message'];
+      if (detalhe is String && detalhe.trim().isNotEmpty) return detalhe;
+    }
+    return fallback;
+  }
+
   Future<void> register({
     required String name,
     required String username,
@@ -45,7 +57,7 @@ class UserService {
         },
       );
     } on DioException catch (e) {
-      final mensagem = e.response?.data?['message'] ?? 'Erro ao criar conta';
+      final mensagem = _mensagemDeErro(e, 'Erro ao criar conta');
       throw Exception(mensagem);
     }
   }
@@ -70,7 +82,7 @@ class UserService {
 
       return response.data;
     } on DioException catch (e) {
-      final mensagem = e.response?.data?['message'] ?? 'Erro ao fazer login';
+      final mensagem = _mensagemDeErro(e, 'Erro ao fazer login');
       throw Exception(mensagem);
     }
   }
@@ -81,7 +93,7 @@ class UserService {
       final response = await ApiClient.dio.get(ApiEndpoints.getProfileById(id));
       return response.data;
     } on DioException catch (e) {
-      final mensagem = e.response?.data?['message'] ?? 'Erro ao buscar perfil';
+      final mensagem = _mensagemDeErro(e, 'Erro ao buscar perfil');
       throw Exception(mensagem);
     }
   }
@@ -99,7 +111,7 @@ class UserService {
       );
       return response.data;
     } on DioException catch (e) {
-      final mensagem = e.response?.data?['message'] ?? 'Erro ao atualizar nome';
+      final mensagem = _mensagemDeErro(e, 'Erro ao atualizar nome');
       throw Exception(mensagem);
     }
   }
@@ -116,7 +128,7 @@ class UserService {
       );
       return response.data;
     } on DioException catch (e) {
-      final mensagem = e.response?.data?['message'] ?? 'Erro ao atualizar bio';
+      final mensagem = _mensagemDeErro(e, 'Erro ao atualizar bio');
       throw Exception(mensagem);
     }
   }
@@ -137,8 +149,7 @@ class UserService {
 
       return response.data;
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ?? 'Erro ao atualizar avatar';
+      final mensagem = _mensagemDeErro(e, 'Erro ao atualizar avatar');
 
       throw Exception(mensagem);
     }
@@ -154,7 +165,7 @@ class UserService {
         data: {'followerId': followerId, 'followingId': followingId},
       );
     } on DioException catch (e) {
-      final mensagem = e.response?.data?['message'] ?? 'Erro ao seguir usuário';
+      final mensagem = _mensagemDeErro(e, 'Erro ao seguir usuário');
       throw Exception(mensagem);
     }
   }
@@ -169,8 +180,7 @@ class UserService {
       );
       return response.data['isFollowing'] ?? false;
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ?? 'Erro ao verificar status de seguir';
+      final mensagem = _mensagemDeErro(e, 'Erro ao verificar status de seguir');
       throw Exception(mensagem);
     }
   }
@@ -185,8 +195,7 @@ class UserService {
         data: {'followerId': followerId, 'followingId': followingId},
       );
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ?? 'Erro ao deixar de seguir usuário';
+      final mensagem = _mensagemDeErro(e, 'Erro ao deixar de seguir usuário');
       throw Exception(mensagem);
     }
   }
@@ -199,9 +208,7 @@ class UserService {
       );
       return response.data['shareUrl'] as String;
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ??
-          'Erro ao gerar link de compartilhamento';
+      final mensagem = _mensagemDeErro(e, 'Erro ao gerar link de compartilhamento');
       throw Exception(mensagem);
     }
   }
@@ -216,9 +223,7 @@ class UserService {
       return response.data['accountId'] as String?;
     } on DioException catch (e) {
       if (e.response?.statusCode == 404) return null;
-      final mensagem =
-          e.response?.data?['message'] ??
-          'Erro ao abrir link de compartilhamento';
+      final mensagem = _mensagemDeErro(e, 'Erro ao abrir link de compartilhamento');
       throw Exception(mensagem);
     }
   }
@@ -235,8 +240,7 @@ class UserService {
       final List data = response.data;
       return data.map((json) => UploadUrlResult.fromJson(json)).toList();
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ?? 'Erro ao gerar URLs de upload';
+      final mensagem = _mensagemDeErro(e, 'Erro ao gerar URLs de upload');
       throw Exception(mensagem);
     }
   }
@@ -293,8 +297,7 @@ class UserService {
       final data = response.data['data'] as List;
       return data.map((json) => UserSearchResult.fromJson(json)).toList();
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ?? 'Erro ao pesquisar usuários';
+      final mensagem = _mensagemDeErro(e, 'Erro ao pesquisar usuários');
       throw Exception(mensagem);
     }
   }
@@ -309,8 +312,7 @@ class UserService {
         data: {'email': email, 'code': code},
       );
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ?? 'Código inválido ou expirado';
+      final mensagem = _mensagemDeErro(e, 'Código inválido ou expirado');
       throw Exception(mensagem);
     }
   }

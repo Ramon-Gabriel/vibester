@@ -55,14 +55,23 @@ class _LoginScreenState extends State<LoginScreen> {
       // interceptor que anexa o header Authorization na chamada.
       ApiClient.token = token;
 
-      // Busca os dados completos do perfil usando o accountId (não o id de
-      // login/auth), que é o que a API usa pra indexar o profile.
-      final profileResponse = await _userService.getProfile(accountId);
-      final usuarioLogado = UserModel.fromProfileJson(
-        profileResponse,
-        accountId: accountId,
-        token: token,
-      );
+      // A credencial já foi aceita e o token é válido a partir daqui. Uma
+      // falha ao carregar o perfil não pode derrubar o login: entramos com os
+      // dados mínimos da resposta de login e o perfil é recarregado depois.
+      UserModel usuarioLogado;
+      try {
+        // Busca os dados completos do perfil usando o accountId (não o id de
+        // login/auth), que é o que a API usa pra indexar o profile.
+        final profileResponse = await _userService.getProfile(accountId);
+        usuarioLogado = UserModel.fromProfileJson(
+          profileResponse,
+          accountId: accountId,
+          token: token,
+        );
+      } catch (e) {
+        debugPrint('Login OK, mas falhou ao carregar o perfil: $e');
+        usuarioLogado = UserModel.fromLoginJson(loginResponse);
+      }
 
       await AuthStorageService.saveSession(usuarioLogado);
 
@@ -80,9 +89,13 @@ class _LoginScreenState extends State<LoginScreen> {
       debugPrint(e.toString());
 
       if (!mounted) return;
+      // Mostra o motivo que a API devolveu em vez de culpar sempre a senha.
+      final motivo = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não foi possível entrar. Verifique seus dados.'),
+        SnackBar(
+          content: Text(
+            motivo.isEmpty ? 'Não foi possível entrar.' : motivo,
+          ),
         ),
       );
     } finally {

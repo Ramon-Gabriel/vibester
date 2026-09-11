@@ -49,12 +49,20 @@ class _EmailConfirmScreenState extends State<EmailConfirmScreen> {
 
       ApiClient.token = token;
 
-      final profileResponse = await _userService.getProfile(accountId);
-      final usuarioLogado = UserModel.fromProfileJson(
-        profileResponse,
-        accountId: accountId,
-        token: token,
-      );
+      // Mesmo tratamento da tela de login: a conta já foi criada e o token é
+      // válido, então falha ao carregar o perfil não desfaz o cadastro.
+      UserModel usuarioLogado;
+      try {
+        final profileResponse = await _userService.getProfile(accountId);
+        usuarioLogado = UserModel.fromProfileJson(
+          profileResponse,
+          accountId: accountId,
+          token: token,
+        );
+      } catch (e) {
+        debugPrint('Cadastro OK, mas falhou ao carregar o perfil: $e');
+        usuarioLogado = UserModel.fromLoginJson(loginResponse);
+      }
 
       await AuthStorageService.saveSession(usuarioLogado);
 
@@ -83,7 +91,7 @@ class _EmailConfirmScreenState extends State<EmailConfirmScreen> {
   }
 
   Future<void> _verificarCodigo() async {
-    if (_pinController.text.length < 5) {
+    if (_pinController.text.length < 6) {
       setState(() => _pinError = true);
       return;
     }

@@ -445,12 +445,12 @@ class _FactSheet extends StatelessWidget {
       children: [
         _FactRow(
           label: 'QUANDO',
-          value: event.fullDateLabel,
+          value: event.fullDateLabel.toUpperCase(),
           trailing: countdown,
         ),
-        _FactRow(label: 'HORA', value: event.timeLabel),
+        _FactRow(label: 'HORA', value: event.timeLabel.toUpperCase()),
         if (event.localizacao.isNotEmpty)
-          _FactRow(label: 'ONDE', value: event.localizacao),
+          _FactRow(label: 'ONDE', value: event.localizacao.toUpperCase()),
       ],
     );
   }

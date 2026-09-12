@@ -67,6 +67,13 @@ class EventPosterCard extends StatelessWidget {
     bottomRight: Radius.circular(AppRadius.md),
   );
 
+  /// Mesmo "canto rasgado", em escala menor — miniatura da variante `wide`.
+  static const _thumbCornerRadius = BorderRadius.only(
+    topLeft: Radius.circular(AppRadius.sm),
+    topRight: Radius.circular(AppRadius.sm),
+    bottomRight: Radius.circular(AppRadius.sm),
+  );
+
   void _open(BuildContext context) {
     if (onTap != null) {
       onTap!();
@@ -111,69 +118,85 @@ class EventPosterCard extends StatelessWidget {
       width: width ?? (tall ? 300 : 168),
       child: AspectRatio(
         aspectRatio: tall ? 3 / 4 : 3 / 4.3,
-        child: ClipRRect(
-          borderRadius: _cornerRadius,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              _image(context),
-
-              // Scrim de leitura + grão: o grão é o que impede a foto de
-              // parecer um banner de stock e amarra o card à textura do resto
-              // do app.
-              const Grain(opacity: 0.06, density: 0.4),
-              DecoratedBox(
-                decoration: BoxDecoration(gradient: colors.photoScrim),
-              ),
-
-              // Selo urgente no topo — só quando o horário sustenta.
-              if (happening)
-                const Positioned(
-                  top: AppSpacing.md,
-                  left: AppSpacing.md,
-                  child: StickerTag.live(),
-                )
-              else if (event.isToday)
-                const Positioned(
-                  top: AppSpacing.md,
-                  left: AppSpacing.md,
-                  child: StickerTag(label: 'HOJE'),
-                ),
-
-              Positioned(
-                left: AppSpacing.md,
-                right: AppSpacing.md,
-                bottom: AppSpacing.md,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (event.categoria.isNotEmpty && tall) ...[
-                      VibesterTag(event.categoria),
-                      const SizedBox(height: AppSpacing.sm),
-                    ],
-                    Text(
-                      event.titulo,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: (tall ? type.headlineMedium : type.headlineSmall)
-                          .copyWith(color: Colors.white),
-                    ),
-                    const SizedBox(height: AppSpacing.xs + 2),
-                    Text(
-                      event.metaLine(includeLocation: tall),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: type.monoSmall.copyWith(
-                        color: happening
-                            ? colors.brasa
-                            : Colors.white.withValues(alpha: 0.75),
-                      ),
-                    ),
-                  ],
-                ),
+        // Sem borda: profundidade vem de uma sombra suave por baixo do
+        // cartaz, não de um contorno em volta dele — a imagem continua sendo
+        // o limite visual do card.
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: _cornerRadius,
+            boxShadow: [
+              BoxShadow(
+                color: colors.scrim.withValues(alpha: 0.32),
+                blurRadius: 22,
+                offset: const Offset(0, 12),
               ),
             ],
+          ),
+          child: ClipRRect(
+            borderRadius: _cornerRadius,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _image(context),
+
+                // Scrim de leitura + grão: o grão é o que impede a foto de
+                // parecer um banner de stock e amarra o card à textura do resto
+                // do app.
+                const Grain(opacity: 0.06, density: 0.4),
+                DecoratedBox(
+                  decoration: BoxDecoration(gradient: colors.photoScrim),
+                ),
+
+                // Selo urgente no topo — só quando o horário sustenta.
+                if (happening)
+                  const Positioned(
+                    top: AppSpacing.md,
+                    left: AppSpacing.md,
+                    child: StickerTag.live(),
+                  )
+                else if (event.isToday)
+                  const Positioned(
+                    top: AppSpacing.md,
+                    left: AppSpacing.md,
+                    child: StickerTag(label: 'HOJE'),
+                  ),
+
+                Positioned(
+                  left: AppSpacing.md,
+                  right: AppSpacing.md,
+                  bottom: AppSpacing.md,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (event.categoria.isNotEmpty && tall) ...[
+                        VibesterTag(event.categoria),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
+                      Text(
+                        event.titulo,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            (tall ? type.headlineMedium : type.headlineSmall)
+                                .copyWith(color: Colors.white),
+                      ),
+                      const SizedBox(height: AppSpacing.xs + 2),
+                      Text(
+                        event.metaLine(includeLocation: tall),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: type.monoSmall.copyWith(
+                          color: happening
+                              ? colors.brasa
+                              : Colors.white.withValues(alpha: 0.75),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -236,11 +259,7 @@ class EventPosterCard extends StatelessWidget {
             ),
             const SizedBox(width: AppSpacing.md),
             ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(AppRadius.sm),
-                topRight: Radius.circular(AppRadius.sm),
-                bottomRight: Radius.circular(AppRadius.sm),
-              ),
+              borderRadius: _thumbCornerRadius,
               child: SizedBox(width: 76, height: 76, child: _image(context)),
             ),
           ],

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/providers/place/place_list_provider.dart';
@@ -5,6 +7,8 @@ import 'package:mobile/screens/events/event_list_screen.dart';
 import 'package:mobile/screens/highlights/property_highlights_screen.dart';
 import 'package:mobile/screens/places/place_ambience_gallery_screen.dart';
 import 'package:mobile/service/places/place_service.dart';
+import 'package:mobile/theme/app_colors.dart';
+import 'package:mobile/theme/app_motion.dart';
 import 'package:mobile/theme/app_spacing.dart';
 import 'package:mobile/theme/theme_extensions.dart';
 import 'package:mobile/theme/vibester_page_route.dart';
@@ -519,7 +523,7 @@ class _PlaceNumbers extends StatelessWidget {
   }
 }
 
-class _PlaceAction extends StatelessWidget {
+class _PlaceAction extends StatefulWidget {
   final IconData? icon;
   final String label;
   final bool active;
@@ -533,39 +537,148 @@ class _PlaceAction extends StatelessWidget {
   });
 
   @override
+  State<_PlaceAction> createState() => _PlaceActionState();
+}
+
+class _PlaceActionState extends State<_PlaceAction>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppMotion.favorite,
+  );
+
+  // Mesma ideia do LikeIndicator (encolhe → cresce com overshoot → assenta),
+  // mas com amplitude discreta — é um botão de texto pequeno, não um coração
+  // de tela cheia.
+  static final _scaleSequence = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 1.0,
+        end: 0.92,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 25,
+    ),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 0.92,
+        end: 1.12,
+      ).chain(CurveTween(curve: Curves.easeOut)),
+      weight: 40,
+    ),
+    TweenSequenceItem(
+      tween: Tween(
+        begin: 1.12,
+        end: 1.0,
+      ).chain(CurveTween(curve: Curves.easeOutBack)),
+      weight: 35,
+    ),
+  ]);
+
+  // Confete pequeno em volta do ícone ao seguir — três cores da marca
+  // (âmbar, brasa, navy) em vez do anel monocromático anterior.
+  static const _burstAngles = [-90.0, -30.0, 30.0, 90.0, 150.0, 210.0];
+
+  List<Widget> _buildBurst(double progress, AppColors colors) {
+    final palette = [colors.ambar, colors.brasa, colors.navy];
+    final eased = Curves.easeOut.transform(progress);
+    final opacity = (1 - progress).clamp(0.0, 1.0);
+    return List.generate(_burstAngles.length, (i) {
+      final angle = _burstAngles[i] * math.pi / 180;
+      final distance = 11.0 * eased;
+      return Transform.translate(
+        offset: Offset(math.cos(angle) * distance, math.sin(angle) * distance),
+        child: Opacity(
+          opacity: opacity,
+          child: Container(
+            width: 3.5,
+            height: 3.5,
+            decoration: BoxDecoration(
+              color: palette[i % palette.length],
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    final wasActive = widget.active;
+    widget.onTap();
+    // Só celebra ao ativar (seguir), não ao desativar (deixar de seguir).
+    if (!wasActive && !context.reduceMotion) {
+      _controller.forward(from: 0);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final foreground = active ? colors.onAmbar : colors.textPrimary;
+    final foreground = widget.active ? colors.onAmbar : colors.textPrimary;
 
     return Semantics(
       button: true,
-      selected: active,
-      label: label,
+      selected: widget.active,
+      label: widget.label,
       child: VibesterPressable(
-        onTap: onTap,
-        borderRadius: AppRadius.pillAll,
-        child: Container(
-          height: 48,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: active ? colors.ambar : Colors.transparent,
-            borderRadius: AppRadius.pillAll,
-            border: Border.all(
-              color: active ? colors.ambar : colors.outline,
-              width: AppStroke.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 17, color: foreground),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                label,
-                style: context.typography.monoMicro.copyWith(color: foreground),
+        onTap: _handleTap,
+        borderRadius: AppRadius.mdAll,
+        child: AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            final progress = _controller.value;
+            return Container(
+              height: 36,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: widget.active ? colors.ambar : Colors.transparent,
+                borderRadius: AppRadius.mdAll,
+                border: Border.all(
+                  color: colors.ambar,
+                  width: AppStroke.regular,
+                ),
               ),
-            ],
-          ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        if (progress > 0 && progress < 1)
+                          ..._buildBurst(progress, colors),
+                        Transform.scale(
+                          scale: _scaleSequence.evaluate(_controller),
+                          child: Icon(
+                            widget.icon,
+                            size: 14,
+                            color: foreground,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Text(
+                    widget.label,
+                    style: context.typography.monoMicro.copyWith(
+                      color: foreground,
+                      fontSize: 8,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );

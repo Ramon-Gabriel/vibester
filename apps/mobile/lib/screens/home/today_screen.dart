@@ -16,7 +16,6 @@ import 'package:mobile/theme/app_spacing.dart';
 import 'package:mobile/theme/theme_extensions.dart';
 import 'package:mobile/utils/event_time.dart';
 import 'package:mobile/widgets/cards/event/event_poster_card.dart';
-import 'package:mobile/widgets/cards/event/weekly_events.dart';
 import 'package:mobile/widgets/cards/place/place_tile.dart';
 import 'package:mobile/widgets/common/section_header.dart';
 import 'package:mobile/widgets/common/vibester_chip.dart';
@@ -630,11 +629,16 @@ class _CategoryRailDelegate extends SliverPersistentHeaderDelegate {
 // Seções
 // -----------------------------------------------------------------------
 
-/// "Essa semana" em carrossel — o formato que a tela de destaques usava.
+/// "Essa semana" em carrossel — só aparece no lugar do dia vazio.
 ///
-/// Só aparece no lugar do dia vazio. É `PageView` com `viewportFraction`
-/// abaixo de 1 e `padEnds: false`, que é o que deixa a borda do próximo card
-/// à mostra e convida a arrastar.
+/// O card é o mesmo [EventPosterCard] usado nos trilhos de "Acontecendo
+/// agora"/"Ainda hoje" (variante `hero`, cartaz com imagem e texto por cima),
+/// em vez de um cartão próprio: o carrossel é só um *layout* diferente
+/// (`PageView` de um item por vez) para o mesmo componente de evento do
+/// resto do app, não uma composição visual à parte.
+///
+/// `PageView` com `viewportFraction` abaixo de 1 e `padEnds: false` é o que
+/// deixa a borda do próximo card à mostra e convida a arrastar.
 ///
 /// O avanço automático foi mantido, com três diferenças em relação ao
 /// original: o timer é anulável e cancelado no `dispose` (não explode se a
@@ -659,12 +663,12 @@ class _WeekCarousel extends StatefulWidget {
 }
 
 class _WeekCarouselState extends State<_WeekCarousel> {
-  /// Altura do card da semana — a mesma da tela de destaques original.
-  static const _height = 270.0;
+  static const _viewportFraction = 0.95;
+  static const _cardGap = AppSpacing.sm;
   static const _interval = Duration(seconds: 4);
   static const _transition = Duration(milliseconds: 700);
 
-  final _controller = PageController(viewportFraction: 0.95);
+  final _controller = PageController(viewportFraction: _viewportFraction);
   Timer? _timer;
   int _page = 0;
 
@@ -719,6 +723,16 @@ class _WeekCarouselState extends State<_WeekCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    // Mesma conta de largura do trilho comum (`_HeroRail`), só que a partir
+    // do que sobra depois da margem lateral padrão de tela: o primeiro card
+    // encosta no mesmo lugar que todo o resto do conteúdo, e o `viewportFraction`
+    // abaixo de 1 é o que deixa o próximo espiar na borda direita.
+    final pageWidth =
+        (MediaQuery.sizeOf(context).width - AppSpacing.screen) *
+        _viewportFraction;
+    final cardWidth = pageWidth - _cardGap;
+    final cardHeight = cardWidth * 4 / 3;
+
     return SliverToBoxAdapter(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -731,22 +745,32 @@ class _WeekCarouselState extends State<_WeekCarousel> {
             onActionTap: () =>
                 Navigator.pushNamed(context, AppRoutes.eventList),
           ),
-          SizedBox(
-            height: _height,
-            child: NotificationListener<UserScrollNotification>(
-              // Mão no carrossel zera a contagem: o próximo salto automático
-              // só vem 4s depois que a pessoa parou de mexer.
-              onNotification: (_) {
-                _restart();
-                return false;
-              },
-              child: PageView.builder(
-                padEnds: false,
-                controller: _controller,
-                onPageChanged: (i) => _page = i,
-                itemCount: widget.events.length,
-                itemBuilder: (context, i) =>
-                    WeeklyEvents(evento: widget.events[i]),
+          Padding(
+            padding: const EdgeInsets.only(left: AppSpacing.screen),
+            child: SizedBox(
+              height: cardHeight,
+              child: NotificationListener<UserScrollNotification>(
+                // Mão no carrossel zera a contagem: o próximo salto
+                // automático só vem 4s depois que a pessoa parou de mexer.
+                onNotification: (_) {
+                  _restart();
+                  return false;
+                },
+                child: PageView.builder(
+                  padEnds: false,
+                  controller: _controller,
+                  onPageChanged: (i) => _page = i,
+                  clipBehavior: Clip.none,
+                  itemCount: widget.events.length,
+                  itemBuilder: (context, i) => Padding(
+                    padding: const EdgeInsets.only(right: _cardGap),
+                    child: EventPosterCard(
+                      event: widget.events[i],
+                      width: cardWidth,
+                      hero: false,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),

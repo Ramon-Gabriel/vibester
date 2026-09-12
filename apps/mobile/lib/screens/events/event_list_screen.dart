@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/models/event/event_model.dart';
 import 'package:mobile/providers/events/events_list_provider.dart';
+import 'package:mobile/service/event/event_service.dart';
 import 'package:mobile/theme/app_spacing.dart';
 import 'package:mobile/theme/theme_extensions.dart';
 import 'package:mobile/utils/event_time.dart';
@@ -11,47 +12,112 @@ import 'package:mobile/widgets/common/vibester_state.dart';
 import 'package:mobile/widgets/motion/staggered_entrance.dart';
 import 'package:provider/provider.dart';
 
-/// Agenda completa de eventos.
+/// Agenda de eventos.
 ///
-/// Serve em dois contextos — como tela cheia (rota `/event-list`, vinda do
-/// "ver tudo" das seções da Home) e como aba dentro do detalhe do
-/// estabelecimento —, por isso o cabeçalho é opcional: dentro de uma aba,
-/// um título de tela repetiria o que a aba já disse.
+/// Serve em dois contextos:
+/// * tela cheia (rota `/event-list`, vinda do "ver tudo" das seções da
+///   Home), com a agenda completa vinda de [EventsListProvider] (dado
+///   compartilhado entre telas, com cache/staleness);
+/// * aba dentro do detalhe de um estabelecimento (`placeId` informado), com
+///   a lista vinda direto de [EventService.getEventsByEstablishment] — dado
+///   específico daquele estabelecimento, sem sentido em cachear no provider
+///   global de eventos.
+///
+/// Por isso o cabeçalho é opcional: dentro de uma aba, um título de tela
+/// repetiria o que a aba já disse.
 ///
 /// A lista é agrupada por dia, com a data como marcador em DM Mono: numa
 /// agenda, o que o usuário procura primeiro é o dia, não o nome do evento.
 class EventListScreen extends StatefulWidget {
   final bool showHeader;
 
-  const EventListScreen({super.key, this.showHeader = false});
+  /// Quando informado, mostra só os eventos desse estabelecimento.
+  final String? placeId;
+
+  const EventListScreen({super.key, this.showHeader = false, this.placeId});
 
   @override
   State<EventListScreen> createState() => _EventListScreenState();
 }
 
 class _EventListScreenState extends State<EventListScreen> {
+  final EventService _eventService = EventService();
+
+  List<EventModel> _placeEvents = [];
+  bool _isLoadingPlace = true;
+  String? _placeError;
+
+  bool get _isPlaceScoped =>
+      widget.placeId != null && widget.placeId!.isNotEmpty;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<EventsListProvider>().fetchEvents();
+    if (_isPlaceScoped) {
+      _fetchPlaceEvents();
+    } else {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<EventsListProvider>().fetchEvents();
+      });
+    }
+  }
+
+  Future<void> _fetchPlaceEvents() async {
+    setState(() {
+      _isLoadingPlace = true;
+      _placeError = null;
     });
+
+    try {
+      _placeEvents = await _eventService.getEventsByEstablishment(
+        widget.placeId!,
+      );
+    } catch (e) {
+      _placeError = 'Não foi possível carregar os eventos do local';
+    } finally {
+      if (mounted) setState(() => _isLoadingPlace = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final provider = context.watch<EventsListProvider>();
 
-    final events = provider.events.where((e) => e.isUpcoming).toList()
+    final bool isLoading;
+    final String? error;
+    final List<EventModel> allEvents;
+    final Future<void> Function() onRefresh;
+
+    if (_isPlaceScoped) {
+      isLoading = _isLoadingPlace;
+      error = _placeError;
+      allEvents = _placeEvents;
+      onRefresh = _fetchPlaceEvents;
+    } else {
+      final provider = context.watch<EventsListProvider>();
+      isLoading = provider.isLoading;
+      error = provider.error;
+      allEvents = provider.events;
+      onRefresh = () => context.read<EventsListProvider>().fetchEvents(
+        force: true,
+      );
+    }
+
+    final events = allEvents.where((e) => e.isUpcoming).toList()
       ..sort((a, b) => a.dataDoEvento.compareTo(b.dataDoEvento));
 
     final body = RefreshIndicator(
       color: colors.ambar,
       backgroundColor: colors.surface,
-      onRefresh: () =>
-          context.read<EventsListProvider>().fetchEvents(force: true),
-      child: _buildList(context, provider, events),
+      onRefresh: onRefresh,
+      child: _buildList(
+        context,
+        isLoading: isLoading,
+        error: error,
+        hasAnyData: allEvents.isNotEmpty,
+        events: events,
+        onRetry: onRefresh,
+      ),
     );
 
     return Scaffold(
@@ -74,11 +140,14 @@ class _EventListScreenState extends State<EventListScreen> {
   }
 
   Widget _buildList(
-    BuildContext context,
-    EventsListProvider provider,
-    List<EventModel> events,
-  ) {
-    if (provider.isLoading && provider.events.isEmpty) {
+    BuildContext context, {
+    required bool isLoading,
+    required String? error,
+    required bool hasAnyData,
+    required List<EventModel> events,
+    required VoidCallback onRetry,
+  }) {
+    if (isLoading && !hasAnyData) {
       return ListView.separated(
         padding: const EdgeInsets.all(AppSpacing.screen),
         itemCount: 5,
@@ -87,27 +156,23 @@ class _EventListScreenState extends State<EventListScreen> {
       );
     }
 
-    if (provider.error != null && events.isEmpty) {
+    if (error != null && events.isEmpty) {
       return ListView(
-        children: [
-          VibesterState.error(
-            message: provider.error!,
-            onAction: () =>
-                context.read<EventsListProvider>().fetchEvents(force: true),
-          ),
-        ],
+        children: [VibesterState.error(message: error, onAction: onRetry)],
       );
     }
 
     if (events.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
+        children: [
           VibesterState(
             headline: 'Agenda vazia',
-            message:
-                'Nenhum evento marcado por enquanto. Puxa pra atualizar em '
-                'alguns minutos.',
+            message: _isPlaceScoped
+                ? 'Esse lugar ainda não tem eventos marcados. Puxa pra '
+                      'atualizar em alguns minutos.'
+                : 'Nenhum evento marcado por enquanto. Puxa pra atualizar em '
+                      'alguns minutos.',
             icon: Icons.event_busy_outlined,
           ),
         ],

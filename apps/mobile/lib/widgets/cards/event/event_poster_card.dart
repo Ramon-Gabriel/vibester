@@ -191,49 +191,60 @@ class EventPosterCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _DateBlock(event: event),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  event.titulo,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: type.headlineSmall.copyWith(color: colors.textPrimary),
-                ),
-                const SizedBox(height: AppSpacing.xs + 2),
-                Text(
-                  [
-                    event.timeLabel,
-                    if (event.localizacao.isNotEmpty)
-                      event.localizacao.toUpperCase(),
-                  ].join('  ·  '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: type.monoSmall.copyWith(color: colors.textMuted),
-                ),
-                if (countdown != null) ...[
-                  const SizedBox(height: AppSpacing.sm),
-                  VibesterTag(countdown, tone: TagTone.live),
+      // `_DateBlock` estica um traço vertical com `CrossAxisAlignment.stretch`
+      // (precisa de uma altura concreta pra se esticar até ela). Fora de um
+      // `ListView`/lista com item de altura fixa, o `Row` recebe altura
+      // infinita do pai (ex.: dentro de um `Column` comum, como a seção
+      // "Essa semana" da Home) e o stretch quebra o layout. `IntrinsicHeight`
+      // resolve isso: mede a altura que o conteúdo realmente precisa (a maior
+      // entre data, texto e miniatura) e usa ela como altura da linha.
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _DateBlock(event: event),
+            const SizedBox(width: AppSpacing.lg),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.titulo,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: type.headlineSmall.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs + 2),
+                  Text(
+                    [
+                      event.timeLabel,
+                      if (event.localizacao.isNotEmpty)
+                        event.localizacao.toUpperCase(),
+                    ].join('  ·  '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: type.monoSmall.copyWith(color: colors.textMuted),
+                  ),
+                  if (countdown != null) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    VibesterTag(countdown, tone: TagTone.live),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(AppRadius.sm),
-              topRight: Radius.circular(AppRadius.sm),
-              bottomRight: Radius.circular(AppRadius.sm),
+            const SizedBox(width: AppSpacing.md),
+            ClipRRect(
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(AppRadius.sm),
+                topRight: Radius.circular(AppRadius.sm),
+                bottomRight: Radius.circular(AppRadius.sm),
+              ),
+              child: SizedBox(width: 76, height: 76, child: _image(context)),
             ),
-            child: SizedBox(width: 76, height: 76, child: _image(context)),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -3,10 +3,11 @@ import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/providers/place/place_list_provider.dart';
 import 'package:mobile/screens/events/event_list_screen.dart';
 import 'package:mobile/screens/highlights/property_highlights_screen.dart';
-import 'package:mobile/screens/places/place_reviews_screen.dart';
+import 'package:mobile/screens/places/place_ambience_gallery_screen.dart';
 import 'package:mobile/service/places/place_service.dart';
 import 'package:mobile/theme/app_spacing.dart';
 import 'package:mobile/theme/theme_extensions.dart';
+import 'package:mobile/theme/vibester_page_route.dart';
 import 'package:mobile/utils/event_time.dart';
 import 'package:mobile/utils/hero_tags.dart';
 import 'package:mobile/widgets/common/vibester_image.dart';
@@ -62,7 +63,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   void _reload() {
@@ -151,6 +152,15 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
                     ].join('\n'),
                   ),
                 ),
+                onShowAmbience: () => Navigator.of(context).push(
+                  vibesterSlideRoute(
+                    PlaceAmbienceGalleryScreen(
+                      placeId: widget.placeId,
+                      placeName: place.nome,
+                    ),
+                    const RouteSettings(name: 'place-ambience-gallery'),
+                  ),
+                ),
               ),
 
               Padding(
@@ -169,6 +179,14 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
                         style: context.typography.bodyLarge.copyWith(
                           color: colors.textSecondary,
                         ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                    ],
+
+                    if (place.endereco.isNotEmpty) ...[
+                      _PlaceAddress(
+                        endereco: place.endereco,
+                        onTap: () => _abrirNoMapa(place),
                       ),
                       const SizedBox(height: AppSpacing.lg),
                     ],
@@ -220,11 +238,7 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
               indicatorWeight: AppStroke.marker,
               labelStyle: context.typography.monoMicro,
               unselectedLabelStyle: context.typography.monoMicro,
-              tabs: const [
-                Tab(text: 'ROLANDO'),
-                Tab(text: 'EVENTOS'),
-                Tab(text: 'O QUE FALAM'),
-              ],
+              tabs: const [Tab(text: 'ROLANDO'), Tab(text: 'EVENTOS')],
             ),
           ),
         ),
@@ -232,9 +246,8 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          PropertyHighlightsScreen(placeId: place.id),
-          const EventListScreen(),
-          PlaceReviewsScreen(place: place),
+          PropertyHighlightsScreen(placeId: widget.placeId),
+          EventListScreen(placeId: widget.placeId),
         ],
       ),
     );
@@ -246,8 +259,13 @@ class _PlaceDetailScreenState extends State<PlaceDetailScreen>
 class _PlaceHero extends StatelessWidget {
   final PlaceModel place;
   final VoidCallback onShare;
+  final VoidCallback onShowAmbience;
 
-  const _PlaceHero({required this.place, required this.onShare});
+  const _PlaceHero({
+    required this.place,
+    required this.onShare,
+    required this.onShowAmbience,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -283,6 +301,12 @@ class _PlaceHero extends StatelessWidget {
                   onTap: () => Navigator.maybePop(context),
                 ),
                 const Spacer(),
+                _HeroAction(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Fotos do ambiente',
+                  onTap: onShowAmbience,
+                ),
+                const SizedBox(width: AppSpacing.sm),
                 _HeroAction(
                   icon: Icons.ios_share_rounded,
                   label: 'Compartilhar',
@@ -388,6 +412,47 @@ class _HeroAction extends StatelessWidget {
             border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
           ),
           child: Icon(icon, size: 20, color: Colors.white),
+        ),
+      ),
+    );
+  }
+}
+
+/// Endereço do estabelecimento. Toque abre o mesmo destino de "COMO CHEGAR".
+class _PlaceAddress extends StatelessWidget {
+  final String endereco;
+  final VoidCallback onTap;
+
+  const _PlaceAddress({required this.endereco, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+
+    return Semantics(
+      button: true,
+      label: 'Endereço: $endereco. Abrir no mapa',
+      child: VibesterPressable(
+        onTap: onTap,
+        borderRadius: AppRadius.smAll,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.location_on_outlined,
+              size: 18,
+              color: colors.textDisabled,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                endereco,
+                style: context.typography.bodyMedium.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

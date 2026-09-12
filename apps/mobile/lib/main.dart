@@ -8,7 +8,6 @@ import 'package:mobile/service/api_client.dart';
 import 'package:mobile/service/auth_storage_service.dart';
 import 'package:mobile/service/user/user_service.dart';
 import 'package:mobile/models/highlights/highlight_model.dart';
-import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/providers/events/events_list_provider.dart';
 import 'package:mobile/providers/feed/publication_list_provider.dart';
 import 'package:mobile/providers/notification/notification_provider.dart';
@@ -35,7 +34,6 @@ import 'package:mobile/screens/onboarding/onboarding_screen.dart';
 import 'package:mobile/screens/places/favorite_places_screen.dart';
 import 'package:mobile/screens/places/hot_places_screen.dart';
 import 'package:mobile/screens/places/place_detail_screen.dart';
-import 'package:mobile/screens/places/place_reviews_screen.dart';
 import 'package:mobile/screens/register/email_confirm_screen.dart';
 import 'package:mobile/screens/register/login_screen.dart';
 import 'package:mobile/screens/register/recover_password_screen.dart';
@@ -321,12 +319,6 @@ class _MyAppState extends State<MyApp> {
                 final placeId = settings.arguments as String;
                 return vibesterDetailRoute(
                   PlaceDetailScreen(placeId: placeId),
-                  settings,
-                );
-              case AppRoutes.placeReviews:
-                final place = settings.arguments as PlaceModel;
-                return vibesterDetailRoute(
-                  PlaceReviewsScreen(place: place),
                   settings,
                 );
 

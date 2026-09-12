@@ -23,10 +23,10 @@ import 'package:provider/provider.dart';
 ///
 /// Aqui existe uma navegação só, com quatro destinos e uma ação:
 ///
-/// * **HOJE** — descoberta: o que está rolando agora, perto, nesta semana.
+/// * **FEED** — o social: o que as pessoas estão postando (tela inicial).
 /// * **EXPLORAR** — busca ativa: categorias, lugares, eventos, pessoas.
 /// * **(+)** — publicar (ação, não destino: volta pra onde o usuário estava).
-/// * **FEED** — o social: o que as pessoas estão postando.
+/// * **HOJE** — descoberta: o que está rolando agora, perto, nesta semana.
 /// * **VOCÊ** — identidade, salvos e ajustes.
 ///
 /// Favoritos deixou de ser um destino de primeiro nível (virou uma seção
@@ -41,11 +41,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  static const _todayIndex = 0;
-  static const _feedIndex = 2;
+  static const _feedIndex = 0;
   static const _profileIndex = 3;
 
-  int _currentIndex = _todayIndex;
+  /// Tela inicial do produto — hoje o FEED.
+  static const _homeIndex = _feedIndex;
+
+  int _currentIndex = _homeIndex;
   bool _dockVisible = true;
 
   final _profileKey = GlobalKey<UserProfileScreenState>();
@@ -57,17 +59,17 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Instanciadas uma vez só: trocar de destino não deve descartar o estado
   /// (posição de scroll, imagens já carregadas) do destino anterior.
   late final List<Widget> _destinations = [
-    const TodayScreen(),
-    const ExploreScreen(),
     const FeedScreen(),
+    const ExploreScreen(),
+    const TodayScreen(),
     UserProfileScreen(key: _profileKey),
   ];
 
   static const _navDestinations = [
     NavbarDestination(
-      icon: Icons.bolt_outlined,
-      activeIcon: Icons.bolt,
-      label: 'HOJE',
+      icon: Icons.dynamic_feed_outlined,
+      activeIcon: Icons.dynamic_feed,
+      label: 'FEED',
     ),
     NavbarDestination(
       icon: Icons.explore_outlined,
@@ -75,9 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
       label: 'EXPLORAR',
     ),
     NavbarDestination(
-      icon: Icons.dynamic_feed_outlined,
-      activeIcon: Icons.dynamic_feed,
-      label: 'FEED',
+      icon: Icons.bolt_outlined,
+      activeIcon: Icons.bolt,
+      label: 'HOJE',
     ),
     NavbarDestination(
       icon: Icons.person_outline_rounded,
@@ -87,12 +89,12 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   void _handleBackPress() {
-    // Qualquer destino que não seja HOJE volta pra ele — a tela inicial do
-    // produto é uma só, e sair do app nunca acontece por acidente no meio da
-    // navegação.
-    if (_currentIndex != _todayIndex) {
+    // Qualquer destino que não seja a tela inicial volta pra ela — a tela
+    // inicial do produto é uma só, e sair do app nunca acontece por acidente
+    // no meio da navegação.
+    if (_currentIndex != _homeIndex) {
       setState(() {
-        _currentIndex = _todayIndex;
+        _currentIndex = _homeIndex;
         _dockVisible = true;
       });
       return;

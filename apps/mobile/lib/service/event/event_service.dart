@@ -71,6 +71,22 @@ class EventService {
     }
   }
 
+  Future<List<EventModel>> getEventsByEstablishment(
+    String establishmentId,
+  ) async {
+    try {
+      final response = await ApiClient.dio.get(
+        ApiEndpoints.eventsByEstablishment(establishmentId),
+      );
+      final List data = response.data;
+      return data.map((json) => EventModel.fromJson(json)).toList();
+    } on DioException catch (e) {
+      throw Exception(
+        apiErrorMessage(e, 'Erro ao buscar eventos do estabelecimento'),
+      );
+    }
+  }
+
   Future<EventModel> getEventById(String eventId) async {
     try {
       final response = await ApiClient.dio.get(

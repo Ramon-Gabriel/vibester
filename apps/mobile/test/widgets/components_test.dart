@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/models/event/event_model.dart';
 import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/theme/app_colors.dart';
+import 'package:mobile/theme/app_theme.dart';
 import 'package:mobile/utils/username.dart';
 import 'package:mobile/widgets/buttons/vibester_button.dart';
 import 'package:mobile/widgets/cards/event/event_poster_card.dart';
@@ -67,6 +68,38 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    testWidgets(
+      'variante wide não estoura dentro de coluna com altura livre '
+      '(caso real: seção "Essa semana" da Home, dentro de um sliver)',
+      (tester) async {
+        // Diferente de `pumpComponent` (que centraliza o card com altura
+        // limitada pelo Scaffold), aqui o card fica dentro de um
+        // `SingleChildScrollView` > `Column` — o mesmo tipo de altura
+        // irrestrita que um `SliverToBoxAdapter` passa adiante. É esse
+        // contexto que expunha o `BoxConstraints` infinito em `_DateBlock`.
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.dark,
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    EventPosterCard(
+                      event: evento(),
+                      variant: EventCardVariant.wide,
+                      hero: false,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(tester.takeException(), isNull);
+      },
+    );
 
     testWidgets('marca "ROLANDO AGORA" só quando o horário sustenta', (
       tester,

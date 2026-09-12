@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mobile/models/event/event_model.dart';
 import 'package:mobile/models/highlights/highlight_model.dart';
-import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/screens/events/event_detail_screen.dart';
 import 'package:mobile/screens/events/event_list_screen.dart';
 import 'package:mobile/screens/events/favorites_events_screen.dart';
@@ -16,8 +15,8 @@ import 'package:mobile/screens/notification/notifications_screen.dart';
 import 'package:mobile/screens/onboarding/onboarding_screen.dart';
 import 'package:mobile/screens/places/favorite_places_screen.dart';
 import 'package:mobile/screens/places/hot_places_screen.dart';
+import 'package:mobile/screens/places/place_ambience_gallery_screen.dart';
 import 'package:mobile/screens/places/place_detail_screen.dart';
-import 'package:mobile/screens/places/place_reviews_screen.dart';
 import 'package:mobile/screens/register/email_confirm_screen.dart';
 import 'package:mobile/screens/register/login_screen.dart';
 import 'package:mobile/screens/register/recover_password_screen.dart';
@@ -61,20 +60,6 @@ void main() {
     totalConfirmed: 42,
     ticketLink: 'https://exemplo.com/ingresso',
     organizador: 'Coletivo Subsolo',
-  );
-
-  final lugar = PlaceModel(
-    id: 'place-1',
-    nome: 'Bar do Zé',
-    nivelMovimento: 4,
-    categoria: 'Bar',
-    avaliacao: 4.6,
-    nivelPrecoMedio: 'medio',
-    bio: 'Bar de esquina com cerveja gelada e som alto.',
-    endereco: 'Rua das Flores, 100',
-    distribuicao: const [2, 3, 8, 20, 40],
-    qtdAvaliacoes: 73,
-    distancia: 1450,
   );
 
   final destaque = HighlightModel(
@@ -165,17 +150,29 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('PlaceReviewsScreen usa só dados reais do lugar', (
+    testWidgets('EventListScreen com placeId busca por estabelecimento', (
       tester,
     ) async {
-      await pumpScreen(tester, PlaceReviewsScreen(place: lugar));
+      await pumpScreen(
+        tester,
+        const EventListScreen(placeId: 'place-1'),
+        user: fakeUser(),
+      );
+      expect(tester.takeException(), isNull);
+    });
 
-      // A nota média e a contagem vêm do model.
-      expect(find.text('4,6'), findsOneWidget);
-      expect(find.text('73 AVALIAÇÕES'), findsOneWidget);
-      // E nenhuma das avaliações fabricadas que existiam antes.
-      expect(find.textContaining('Fernanda'), findsNothing);
-      expect(find.textContaining('Rafael'), findsNothing);
+    testWidgets('PlaceAmbienceGalleryScreen renderiza sem quebrar', (
+      tester,
+    ) async {
+      await pumpScreen(
+        tester,
+        const PlaceAmbienceGalleryScreen(
+          placeId: 'place-1',
+          placeName: 'Bar do Zé',
+        ),
+        user: fakeUser(),
+      );
+      expect(find.text('Bar do Zé'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

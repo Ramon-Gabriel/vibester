@@ -8,7 +8,6 @@ class AppRoutes {
   static const favoritesPlaces = '/favorites-places';
   static const placeDetail = '/place-detail';
   static const hotPlaces = '/hot-places';
-  static const placeReviews = '/place-reviews';
 
   //HOME
   static const home = '/home';

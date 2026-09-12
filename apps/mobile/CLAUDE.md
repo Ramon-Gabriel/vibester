@@ -17,10 +17,10 @@ O app mobile é a única interface de usuário do Vibester (não há web app hoj
 quatro destinos e a `VibesterNavbar` embaixo.
 
 ```text
-HOJE      → screens/home/today_screen.dart      descoberta: agora, hoje, perto, em alta, semana
+FEED      → screens/feed/feed_screen.dart       social (tela inicial do app)
 EXPLORAR  → screens/explore/explore_screen.dart busca (lugares, rolês, pessoas) + categorias
   (+)     → screens/feed/new_publication_screen.dart   publicar (ação, não destino)
-FEED      → screens/feed/feed_screen.dart       social
+HOJE      → screens/home/today_screen.dart      descoberta: agora, hoje, perto, em alta, semana
 VOCÊ      → screens/user/user_profile_screen.dart identidade + atalho pra "Seus rolês"
 ```
 

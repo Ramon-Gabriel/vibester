@@ -94,8 +94,12 @@ class _IndicatorPainter extends CustomPainter {
 
     // Destinos depois do vão central estão deslocados pela largura dele. O
     // deslocamento acompanha a travessia em vez de saltar no meio dela, senão
-    // o halo "teleportaria" ao cruzar o botão central.
-    final crossing = (position - (middleIndex - 0.5)).clamp(0.0, 1.0);
+    // o halo "teleportaria" ao cruzar o botão central. A travessia começa
+    // quando o halo sai do item anterior ao vão (middleIndex - 1) e termina
+    // exatamente ao chegar no item depois do vão (middleIndex) — usar
+    // "middleIndex - 0.5" como início fazia o halo assentar em cima do botão
+    // central com só metade do deslocamento aplicado.
+    final crossing = (position - (middleIndex - 1)).clamp(0.0, 1.0);
     final shift = centerGap * crossing;
 
     final left = leadingInset + position * slotWidth + shift;

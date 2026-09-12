@@ -11,10 +11,15 @@ import 'package:mobile/widgets/navigation/navbar_tokens.dart';
 /// movendo.
 ///
 /// É só a cápsula: uma superfície acesa em `ambar` que desliza por baixo do
-/// ícone. Antes havia também um halo radial e um traço de marcador embaixo;
+/// item. Antes havia também um halo radial e um traço de marcador embaixo;
 /// os dois saíram a pedido — o destaque agora é cor de fundo e nada mais, o
 /// que também deixa a leitura mais calma numa barra que já tem vidro, grão e
 /// um botão luminoso no meio.
+///
+/// A cápsula envolve **ícone e rótulo**, não só o ícone. Como o rótulo existe
+/// apenas no destino ativo, é o conjunto inteiro que diz "você está aqui";
+/// cobrir só a metade de cima deixava o texto pendurado fora do destaque,
+/// como se pertencesse a outra coisa.
 class NavbarIndicator extends StatelessWidget {
   /// Posição contínua entre slots. Pode ultrapassar os limites durante o
   /// overshoot da mola — o desenho lida com isso naturalmente.
@@ -88,6 +93,27 @@ class _IndicatorPainter extends CustomPainter {
     required this.accent,
   });
 
+  /// Altura da cápsula.
+  ///
+  /// O conteúdo do item ativo mede cerca de 36px — ícone (23) + 3 de folga +
+  /// rótulo de 9px com entrelinha 1.1 — e o `Column` do item é centralizado
+  /// nos [NavbarTokens.height] da barra, ocupando de 18 a 54. Uma cápsula de
+  /// 48 centrada no mesmo eixo vai de 12 a 60: cobre os dois com a mesma
+  /// folga em cima e embaixo, e ainda sobra margem para o rótulo crescer até
+  /// o teto de text scaling de 1.3 que o item impõe.
+  static const double _height = 48;
+
+  /// Fração do slot ocupada pela cápsula.
+  ///
+  /// Larga o bastante para o rótulo mais comprido: "EXPLORAR" em DM Mono 9px
+  /// com `letterSpacing: 1.0` mede uns 51px, e num aparelho de 390px o slot
+  /// dá ~67px. Os 66% de antes davam 44px e cortariam o texto nas pontas.
+  static const double _widthFactor = 0.92;
+
+  /// Raio proporcional à altura nova. Com 16, a cápsula mais alta lia como
+  /// retângulo de canto lixado em vez de cápsula.
+  static const Radius _radius = Radius.circular(20);
+
   @override
   void paint(Canvas canvas, Size size) {
     if (slotWidth <= 0) return;
@@ -104,19 +130,18 @@ class _IndicatorPainter extends CustomPainter {
 
     final left = leadingInset + position * slotWidth + shift;
     final centerX = left + slotWidth / 2;
-    // Sobe em relação ao centro: quem a cápsula precisa envolver é o ícone,
-    // que fica acima do rótulo.
-    final centerY = size.height / 2 - 7;
 
-    final capsuleWidth = slotWidth * 0.66;
-    const capsuleHeight = 42.0;
+    // Centro da barra: é onde o par ícone+rótulo está centralizado. Havia um
+    // -7 aqui, de quando a cápsula envolvia só o ícone.
+    final centerY = size.height / 2;
+
     final capsule = RRect.fromRectAndRadius(
       Rect.fromCenter(
         center: Offset(centerX, centerY),
-        width: capsuleWidth,
-        height: capsuleHeight,
+        width: slotWidth * _widthFactor,
+        height: _height,
       ),
-      const Radius.circular(16),
+      _radius,
     );
 
     canvas.drawRRect(

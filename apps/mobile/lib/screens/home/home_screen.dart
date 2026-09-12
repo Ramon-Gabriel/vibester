@@ -74,7 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     NavbarDestination(
       icon: Icons.explore_outlined,
       activeIcon: Icons.explore,
-      label: 'EXPLORAR',
+      label: 'BUSCA',
     ),
     NavbarDestination(
       icon: Icons.bolt_outlined,

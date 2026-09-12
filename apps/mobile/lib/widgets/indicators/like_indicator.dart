@@ -74,16 +74,16 @@ class _LikeIndicatorState extends State<LikeIndicator>
         ? context.colors.brasa
         : context.colors.textDisabled;
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10.0),
+    return Semantics(
+      button: true,
+      label: widget.publication.isLiked ? 'Descurtir' : 'Curtir',
       child: GestureDetector(
         onTap: _toggleLike,
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          decoration: BoxDecoration(
-            color: context.colors.noturno,
-            borderRadius: BorderRadius.circular(30),
-          ),
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          // Alvo de toque confortável sem caixa visível em volta: a ação é o
+          // ícone, não um botão desenhado.
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -116,21 +116,27 @@ class _LikeIndicatorState extends State<LikeIndicator>
                           ),
                         Transform.scale(
                           scale: _scaleSequence.evaluate(_controller),
-                          child: Icon(Icons.favorite, color: color, size: 24),
+                          child: Icon(
+                            widget.publication.isLiked
+                                ? Icons.favorite
+                                : Icons.favorite_border_rounded,
+                            color: color,
+                            size: 24,
+                          ),
                         ),
                       ],
                     ),
                   );
                 },
               ),
-              SizedBox(width: 10),
+              const SizedBox(width: 8),
               TweenAnimationBuilder<int>(
                 tween: IntTween(begin: 0, end: widget.publication.likes),
                 duration: context.adaptiveMotion(AppMotion.ui),
                 curve: AppMotion.standard,
                 builder: (context, value, _) => Text(
-                  value.toString(),
-                  style: context.typography.titleSmall.copyWith(color: color),
+                  value.toString().padLeft(2, '0'),
+                  style: context.typography.mono.copyWith(color: color),
                 ),
               ),
             ],

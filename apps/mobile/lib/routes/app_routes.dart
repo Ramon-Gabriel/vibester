@@ -40,6 +40,12 @@ class AppRoutes {
   static const userInterests = '/user-interests';
   static const otherProfile = '/other-profile';
 
+  //NOTIFICATIONS
+  static const notifications = '/notifications';
+
+  //SAVED
+  static const saved = '/saved';
+
   //FEED
   static const feed = '/feed';
   static const newPublication = '/new-publication';

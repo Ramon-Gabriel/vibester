@@ -1,129 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/models/place/place_model.dart';
-import 'package:mobile/theme/app_motion.dart';
+import 'package:mobile/theme/app_spacing.dart';
 import 'package:mobile/theme/theme_extensions.dart';
-import 'package:mobile/widgets/cards/event/review_card.dart';
+import 'package:mobile/widgets/common/vibester_state.dart';
 import 'package:mobile/widgets/indicators/review_indicator.dart';
-import 'package:mobile/widgets/motion/vibester_pressable.dart';
 
-class PlaceReviewsScreen extends StatefulWidget {
+/// O que falam do estabelecimento.
+///
+/// **Atenção ao que foi removido:** esta tela exibia seis avaliações escritas
+/// diretamente no código — nomes de pessoas ("Fernanda Portela", "Rafael
+/// Mendonça"…), notas e comentários inventados — iguais para todo
+/// estabelecimento do app, acompanhadas de três botões de filtro que não
+/// filtravam nada. Prova social fabricada é exatamente o que o briefing
+/// proíbe, e num produto de descoberta ela também é o tipo de coisa que
+/// destrói a confiança do usuário no dia em que ele percebe.
+///
+/// O que ficou é o que a API realmente entrega: a nota média, a quantidade de
+/// avaliações e a distribuição por estrela (`averageRating`, `reviewCount`,
+/// `ratingDistribution` em `PlaceModel`). A lista de comentários individuais
+/// volta quando existir endpoint que a forneça.
+class PlaceReviewsScreen extends StatelessWidget {
   final PlaceModel place;
+
   const PlaceReviewsScreen({super.key, required this.place});
 
   @override
-  State<PlaceReviewsScreen> createState() => _PlaceReviewsScreenState();
-}
-
-class _PlaceReviewsScreenState extends State<PlaceReviewsScreen> {
-  int _filtroSelecionado = 0;
-
-  Widget _buildFiltroBtn(String label, int index) {
-    final selecionado = _filtroSelecionado == index;
-    return AnimatedContainer(
-      duration: context.adaptiveMotion(AppMotion.normal),
-      curve: AppMotion.standard,
-      decoration: BoxDecoration(
-        color: selecionado ? context.colors.ambar : context.colors.noturno,
-        borderRadius: BorderRadius.all(Radius.circular(19)),
-        border: selecionado
-            ? Border.all(color: context.colors.border, width: 0)
-            : Border.all(color: context.colors.border, width: 2),
-      ),
-      child: SizedBox(
-        width: 100,
-        height: 40,
-        child: VibesterPressable(
-          borderRadius: BorderRadius.circular(19),
-          onTap: () {
-            setState(() {
-              _filtroSelecionado = index;
-            });
-          },
-          child: Center(
-            child: Text(
-              label,
-              style: context.typography.labelSmall.copyWith(
-                color: selecionado
-                    ? context.colors.textPrimary
-                    : context.colors.textMuted,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final temAvaliacoes = place.qtdAvaliacoes > 0 || place.avaliacao > 0;
+
     return Scaffold(
       backgroundColor: context.colors.noturno,
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ReviewIndicator(
-              avaliacao: widget.place.avaliacao,
-              distribuicao: widget.place.distribuicao,
-              totalReviews: widget.place.qtdAvaliacoes,
-            ),
-
-            const SizedBox(height: 5),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildFiltroBtn('Mais Recentes', 0),
-                _buildFiltroBtn('Positivas', 1),
-                _buildFiltroBtn('Negativas', 2),
-              ],
-            ),
-
-            const SizedBox(height: 5),
-
-            ReviewCard(
-              nomeUsuario: 'Fernanda Portela',
-              avaliacao: 5.0,
-              comentario:
-                  'Vibe incrível! O som estava perfeito e o atendimento foi nota 10. Com certeza a melhor noite de SP.',
-              tempo: '2 dias atrás',
-            ),
-            ReviewCard(
-              nomeUsuario: 'Rafael Mendonça',
-              avaliacao: 5.0,
-              comentario:
-                  'Fui numa sexta e saí de lá impressionado. DJ arrasou, bebida gelada e o pessoal super animado. Voltarei com certeza.',
-              tempo: '5 dias atrás',
-            ),
-            ReviewCard(
-              nomeUsuario: 'Camila Rocha',
-              avaliacao: 4.0,
-              comentario:
-                  'Ambiente incrível e música boa demais. Só achei a fila pra entrar um pouco demorada, mas valeu cada minuto.',
-              tempo: '1 semana atrás',
-            ),
-            ReviewCard(
-              nomeUsuario: 'Bruno Castilho',
-              avaliacao: 5.0,
-              comentario:
-                  'Melhor balada que já fui em anos. O line-up estava absurdo e o som te envolve do começo ao fim. Experiência única.',
-              tempo: '2 semanas atrás',
-            ),
-            ReviewCard(
-              nomeUsuario: 'Larissa Figueiredo',
-              avaliacao: 4.5,
-              comentario:
-                  'Adorei o espaço e a energia do lugar. Atendimento rápido mesmo lotado. Só o banheiro deixou um pouco a desejar.',
-              tempo: '3 semanas atrás',
-            ),
-            ReviewCard(
-              nomeUsuario: 'Thiago Alves',
-              avaliacao: 5.0,
-              comentario:
-                  'Já fui em várias baladas e essa é referência. Organização impecável, som de qualidade e pista que não esvazia. Top demais.',
-              tempo: '1 mês atrás',
-            ),
-          ],
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screen,
+          AppSpacing.lg,
+          AppSpacing.screen,
+          AppSpacing.dockGap,
         ),
+        children: [
+          if (temAvaliacoes)
+            ReviewIndicator(
+              avaliacao: place.avaliacao,
+              distribuicao: place.distribuicao,
+              totalReviews: place.qtdAvaliacoes,
+            ),
+
+          const SizedBox(height: AppSpacing.xl),
+
+          VibesterState(
+            headline: temAvaliacoes ? 'Sem comentários' : 'Ninguém falou nada',
+            message: temAvaliacoes
+                ? 'A nota acima é a média real de quem já avaliou. Os '
+                      'comentários individuais aparecem aqui em breve.'
+                : 'Esse lugar ainda não recebeu avaliações. Vai lá e conta '
+                      'como foi.',
+            icon: Icons.rate_review_outlined,
+          ),
+        ],
       ),
     );
   }

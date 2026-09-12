@@ -2,12 +2,16 @@ import 'package:dio/dio.dart';
 import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/service/api_client.dart';
 import 'package:mobile/service/api_endpoints.dart';
+import 'package:mobile/service/api_error.dart';
 
 class PlaceService {
   Future<List<PlaceModel>> getPlaces() async {
-    final response = await ApiClient.dio.get(ApiEndpoints.establishments());
-    final List data = response.data['data'];
-    return data.map((json) => PlaceModel.fromJson(json)).toList();
+    try {
+      final response = await ApiClient.dio.get(ApiEndpoints.establishments());
+      return _parsePage(response.data);
+    } on DioException catch (e) {
+      throw Exception(apiErrorMessage(e, 'Erro ao buscar estabelecimentos'));
+    }
   }
 
   Future<List<PlaceModel>> getPlacesByCategory(String category) async {
@@ -15,13 +19,11 @@ class PlaceService {
       final response = await ApiClient.dio.get(
         ApiEndpoints.establishmentsByCategory(category),
       );
-      final List data = response.data;
-      return data.map((json) => PlaceModel.fromJson(json)).toList();
+      return _parsePage(response.data);
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ??
-          'Erro ao buscar estabelecimentos por categoria';
-      throw Exception(mensagem);
+      throw Exception(
+        apiErrorMessage(e, 'Erro ao buscar estabelecimentos por categoria'),
+      );
     }
   }
 
@@ -32,10 +34,16 @@ class PlaceService {
       );
       return PlaceModel.fromJson(response.data);
     } on DioException catch (e) {
-      final mensagem =
-          e.response?.data?['message'] ??
-          'Erro ao buscar perfil do estabelecimento';
-      throw Exception(mensagem);
+      throw Exception(
+        apiErrorMessage(e, 'Erro ao buscar perfil do estabelecimento'),
+      );
     }
+  }
+
+  // GET /establishments é paginado: com ou sem filtro de categoria a resposta
+  // é `{ data: [...], pagination: {...} }`, nunca uma lista crua.
+  List<PlaceModel> _parsePage(dynamic body) {
+    final List data = body['data'];
+    return data.map((json) => PlaceModel.fromJson(json)).toList();
   }
 }

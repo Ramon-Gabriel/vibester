@@ -12,11 +12,13 @@ import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/providers/events/events_list_provider.dart';
 import 'package:mobile/providers/feed/publication_list_provider.dart';
 import 'package:mobile/providers/notification/notification_provider.dart';
+import 'package:mobile/providers/place/nearby_provider.dart';
 import 'package:mobile/providers/place/place_list_provider.dart';
 import 'package:mobile/providers/theme/theme_provider.dart';
 import 'package:mobile/providers/user/user_provider.dart';
 import 'package:mobile/routes/app_routes.dart';
 import 'package:mobile/service/theme/theme_service.dart';
+import 'package:mobile/service/user/interests_storage.dart';
 import 'package:mobile/theme/app_theme.dart';
 import 'package:mobile/theme/vibester_page_route.dart';
 import 'package:mobile/screens/events/event_detail_screen.dart';
@@ -26,6 +28,8 @@ import 'package:mobile/screens/feed/feed_screen.dart';
 import 'package:mobile/screens/feed/new_publication_screen.dart';
 import 'package:mobile/screens/home/home_screen.dart';
 import 'package:mobile/screens/home/initial_screen.dart';
+import 'package:mobile/screens/notification/notifications_screen.dart';
+import 'package:mobile/screens/saved/saved_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:mobile/screens/onboarding/onboarding_screen.dart';
 import 'package:mobile/screens/places/favorite_places_screen.dart';
@@ -37,7 +41,7 @@ import 'package:mobile/screens/register/login_screen.dart';
 import 'package:mobile/screens/register/recover_password_screen.dart';
 import 'package:mobile/screens/register/register_screen.dart';
 import 'package:mobile/screens/register/reset_password_screen.dart';
-import 'package:mobile/screens/search/search_screen.dart';
+import 'package:mobile/screens/explore/explore_screen.dart';
 import 'package:mobile/screens/settings/account_management_settings_screen.dart';
 import 'package:mobile/screens/settings/personal_information_settings_screen.dart';
 import 'package:mobile/screens/settings/settings_screen.dart';
@@ -71,8 +75,24 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSizeBytes = 200 << 20; // 200MB
 
   await initializeDateFormatting('pt_BR', null);
-  final savedUser = await AuthStorageService.loadSession();
+  // Interesses escolhidos no onboarding: restaurados antes da primeira tela
+  // pra a régua de categorias da Home já nascer na ordem do usuário.
+  await InterestsStorage.restore();
+  var savedUser = await AuthStorageService.loadSession();
   final onboardingPendente = await AuthStorageService.onboardingPendente();
+  // JWT vencido não é sessão: restaurar abriria a home com o feed recusando
+  // tudo com 401. Descarta e começa pela tela inicial.
+  final savedToken = savedUser?.token;
+  // Guardado para a interface: descartar a sessão em silêncio faz o usuário
+  // abrir o app, cair na tela inicial e achar que perdeu tudo. O 401 em tempo
+  // de uso já explica o que houve (ver `_handleSessionExpired`); o boot
+  // precisava fazer o mesmo.
+  var sessaoExpirada = false;
+  if (savedToken != null && ApiClient.isTokenExpired(savedToken)) {
+    await AuthStorageService.clearSession();
+    savedUser = null;
+    sessaoExpirada = true;
+  }
   if (savedUser?.token != null) {
     ApiClient.token = savedUser!.token;
   }
@@ -82,6 +102,7 @@ void main() async {
       savedUser: savedUser,
       onboardingPendente: onboardingPendente,
       initialThemeMode: initialThemeMode,
+      sessaoExpirada: sessaoExpirada,
     ),
   );
 }
@@ -91,11 +112,16 @@ class MyApp extends StatefulWidget {
   final bool onboardingPendente;
   final ThemeMode initialThemeMode;
 
+  /// A sessão salva foi descartada no boot por token vencido. O app avisa e
+  /// leva ao login, em vez de abrir a capa como se nunca tivesse havido conta.
+  final bool sessaoExpirada;
+
   const MyApp({
     super.key,
     this.savedUser,
     this.onboardingPendente = false,
     required this.initialThemeMode,
+    this.sessaoExpirada = false,
   });
 
   @override
@@ -111,7 +137,50 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    ApiClient.onSessionExpired = _handleSessionExpired;
     _initDeepLinks();
+
+    if (widget.sessaoExpirada) {
+      // Depois do primeiro frame: antes disso não existe navigator nem
+      // messenger para receber isso.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _avisarSessaoExpirada();
+      });
+    }
+  }
+
+  /// Leva ao login com a explicação. Mesma pilha e mesma mensagem do caminho
+  /// de 401 em tempo de uso, para as duas formas de perder a sessão terminarem
+  /// no mesmo lugar.
+  void _avisarSessaoExpirada() {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+
+    navigator.pushNamed(AppRoutes.login);
+    ScaffoldMessenger.of(navigator.context).showSnackBar(
+      const SnackBar(content: Text('Sua sessão expirou. Entra de novo.')),
+    );
+  }
+
+  // 401 numa rota autenticada: o token venceu. Encerra a sessão pelos dois
+  // lados (memória e storage seguro, via UserProvider.logout) e volta ao
+  // login, mesma pilha do "Sair" das configurações.
+  Future<void> _handleSessionExpired() async {
+    final navigator = _navigatorKey.currentState;
+    if (navigator == null) return;
+
+    final messenger = ScaffoldMessenger.of(navigator.context);
+    final userProvider = navigator.context.read<UserProvider>();
+    if (userProvider.user == null) return;
+
+    await userProvider.logout();
+    if (!mounted) return;
+
+    navigator.pushNamedAndRemoveUntil(AppRoutes.initialScreen, (_) => false);
+    navigator.pushNamed(AppRoutes.login);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Sua sessão expirou. Entra de novo.')),
+    );
   }
 
   Future<void> _initDeepLinks() async {
@@ -131,10 +200,21 @@ class _MyAppState extends State<MyApp> {
     final navigator = _navigatorKey.currentState;
     if (navigator == null) return;
 
+    // Capturados antes do await: depois dele o context do navigator pode ter
+    // sido desmontado, e usá-lo cruzando o gap assíncrono é o que o
+    // use_build_context_synchronously alerta.
+    final messenger = ScaffoldMessenger.of(navigator.context);
+    final currentUserId = navigator.context
+        .read<UserProvider>()
+        .user
+        ?.accountId;
+
     try {
       final resolvedAccountId = await _userService.resolveShareToken(token);
+      if (!mounted) return;
+
       if (resolvedAccountId == null) {
-        ScaffoldMessenger.of(navigator.context).showSnackBar(
+        messenger.showSnackBar(
           const SnackBar(
             content: Text(
               'Este link de compartilhamento expirou ou é inválido.',
@@ -144,10 +224,6 @@ class _MyAppState extends State<MyApp> {
         return;
       }
 
-      final currentUserId = navigator.context
-          .read<UserProvider>()
-          .user
-          ?.accountId;
       if (resolvedAccountId == currentUserId) {
         navigator.pushNamed(AppRoutes.profile);
       } else {
@@ -157,15 +233,21 @@ class _MyAppState extends State<MyApp> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        navigator.context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      // Mensagem tratada na tela; o detalhe da exceção fica no log local.
+      debugPrint('Falha ao abrir link compartilhado: $e');
+      if (!mounted) return;
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Não foi possível abrir esse link agora.'),
+        ),
+      );
     }
   }
 
   @override
   void dispose() {
     _linkSubscription?.cancel();
+    ApiClient.onSessionExpired = null;
     super.dispose();
   }
 
@@ -184,6 +266,7 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => PlaceListProvider()),
+        ChangeNotifierProvider(create: (_) => NearbyProvider()),
         ChangeNotifierProvider(create: (_) => EventsListProvider()),
         ChangeNotifierProvider(create: (_) => PublicationListProvider()),
         ChangeNotifierProvider.value(value: userProvider),
@@ -210,7 +293,10 @@ class _MyAppState extends State<MyApp> {
             switch (settings.name) {
               // EVENTS
               case AppRoutes.eventList:
-                return vibesterSlideRoute(const EventListScreen(), settings);
+                return vibesterSlideRoute(
+                  const EventListScreen(showHeader: true),
+                  settings,
+                );
               case AppRoutes.favoritesEvents:
                 return vibesterSlideRoute(
                   const FavoritesEventsScreen(),
@@ -278,7 +364,7 @@ class _MyAppState extends State<MyApp> {
 
               // SEARCH
               case AppRoutes.search:
-                return vibesterSlideRoute(const SearchScreen(), settings);
+                return vibesterSlideRoute(const ExploreScreen(), settings);
 
               // SETTINGS
               case AppRoutes.accountManagementSettings:
@@ -313,6 +399,17 @@ class _MyAppState extends State<MyApp> {
                   OtherUsersProfileScreen(accountId: accountid),
                   settings,
                 );
+
+              // NOTIFICATIONS
+              case AppRoutes.notifications:
+                return vibesterSlideRoute(
+                  const NotificationsScreen(),
+                  settings,
+                );
+
+              // SAVED
+              case AppRoutes.saved:
+                return vibesterSlideRoute(const SavedScreen(), settings);
 
               // FEED
               case AppRoutes.feed:

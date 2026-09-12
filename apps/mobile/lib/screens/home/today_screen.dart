@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:mobile/models/event/event_model.dart';
 import 'package:mobile/models/place/place_model.dart';
@@ -13,6 +16,7 @@ import 'package:mobile/theme/app_spacing.dart';
 import 'package:mobile/theme/theme_extensions.dart';
 import 'package:mobile/utils/event_time.dart';
 import 'package:mobile/widgets/cards/event/event_poster_card.dart';
+import 'package:mobile/widgets/cards/event/weekly_events.dart';
 import 'package:mobile/widgets/cards/place/place_tile.dart';
 import 'package:mobile/widgets/common/section_header.dart';
 import 'package:mobile/widgets/common/vibester_chip.dart';
@@ -51,6 +55,12 @@ import 'package:provider/provider.dart';
 /// foi removida: ela era alimentada por uma lista fixa no código (descontos,
 /// nomes de bares e condições inventados), e conteúdo fabricado apresentado
 /// como oferta real não é opção.
+///
+/// **Quando o dia está vazio**, o bloco 02 não vira uma tela de "nada por
+/// aqui": a semana sobe pro lugar dele, em carrossel, e o estado vazio de
+/// verdade só aparece se a semana também estiver vazia. O aviso de que hoje
+/// não tem nada continua sendo dado — vai no subtítulo da seção, senão o
+/// usuário lê os cards da semana como se fossem de hoje.
 class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
 
@@ -107,10 +117,20 @@ class _TodayScreenState extends State<TodayScreen> {
             .toList()
           ..sort((a, b) => a.dataDoEvento.compareTo(b.dataDoEvento));
 
+    // A semana sai da união de duas fontes, não só do endpoint /events/week:
+    // ele responde por uma janela de datas que a tela não controla (pode
+    // começar na segunda e vir cheio de coisa já passada, que o isUpcoming
+    // corta), enquanto events.events já está em memória e costuma trazer bem
+    // mais. Juntar as duas e deduplicar por id dá o que realmente existe de
+    // futuro, sem depender do recorte que o backend escolheu.
+    final seenWeek = <String>{};
     final week =
-        _filterEvents(
-            events.weekEvents,
-          ).where((e) => e.isUpcoming && !e.isToday).toList()
+        _filterEvents([...events.weekEvents, ...events.events])
+            .where((e) => e.isUpcoming && !e.isToday)
+            .where(
+              (e) => seenWeek.add(e.id ?? '${e.titulo}|${e.dataDoEvento}'),
+            )
+            .toList()
           ..sort((a, b) => a.dataDoEvento.compareTo(b.dataDoEvento));
 
     final hot =
@@ -121,6 +141,12 @@ class _TodayScreenState extends State<TodayScreen> {
 
     final firstLoad =
         events.isLoading && events.events.isEmpty && places.places.isEmpty;
+
+    // A condicional do bloco 02: nada hoje → a semana assume o lugar; nada
+    // hoje **e** nada na semana → aí sim o estado vazio com a lua. E quando a
+    // semana assume aqui em cima, ela não pode aparecer de novo lá embaixo.
+    final nothingToday = happeningNow.isEmpty && laterToday.isEmpty;
+    final weekTakesOver = nothingToday && week.isNotEmpty;
 
     // Numeração corrida: só conta as seções que realmente vão à tela.
     var section = 0;
@@ -165,8 +191,17 @@ class _TodayScreenState extends State<TodayScreen> {
                   eyebrow: 'AINDA HOJE',
                   title: 'Seu próximo rolê',
                   items: laterToday,
+                ),
+
+              if (weekTakesOver)
+                _WeekCarousel(
+                  index: next(),
+                  events: week.take(12).toList(),
+                  subtitle: _category == null
+                      ? 'Isso é o que vem aí.'
+                      : 'Isso é o que vem aí em $_category.',
                 )
-              else if (happeningNow.isEmpty)
+              else if (nothingToday)
                 SliverToBoxAdapter(child: _NothingToday(category: _category)),
 
               if (nearby.status != LocationStatus.unavailable ||
@@ -180,7 +215,7 @@ class _TodayScreenState extends State<TodayScreen> {
               if (hot.isNotEmpty)
                 _HotSection(index: next(), places: hot.take(5).toList()),
 
-              if (week.isNotEmpty)
+              if (week.isNotEmpty && !weekTakesOver)
                 _WeekSection(index: next(), events: week.take(6).toList()),
             ],
 
@@ -325,32 +360,9 @@ class _Masthead extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // "O QUE TEM HOJE?" quebrado em três linhas: a pergunta vira
-                // um cartaz, e o "HOJE?" — a palavra que carrega o produto —
-                // fica sozinho na última linha, marcado a mão.
-                Text(
-                  'O QUE\nTEM',
-                  style: type.displayHuge.copyWith(color: colors.textPrimary),
-                ),
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Text(
-                      'HOJE?',
-                      style: type.displayHuge.copyWith(color: colors.ambar),
-                    ),
-                    Positioned(
-                      left: -4,
-                      bottom: -2,
-                      child: ScribbleMark(
-                        shape: ScribbleShape.underline,
-                        color: colors.brasa,
-                        size: const Size(168, 14),
-                        strokeWidth: 3,
-                      ),
-                    ),
-                  ],
-                ),
+                // "O QUE TEM HOJE?" em três linhas, com o mascote ocupando o
+                // espaço morto à direita na altura exata do bloco.
+                const _Headline(),
 
                 const SizedBox(height: AppSpacing.lg),
                 if (happeningNow > 0)
@@ -370,6 +382,121 @@ class _Masthead extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// A manchete em três linhas com o mascote ao lado.
+///
+/// O tamanho do mascote não é uma constante chutada: as três linhas são
+/// medidas com [TextPainter] na fonte real e no fator de acessibilidade em
+/// uso, e a imagem recebe exatamente essa altura. Se o usuário aumentar a
+/// fonte do sistema, o mascote cresce junto em vez de descolar da manchete.
+///
+/// A largura é o que sobra da linha mais longa (incluindo o risco embaixo do
+/// "HOJE?", que é mais largo que a palavra) — ou seja, o mascote nunca
+/// empurra nem espreme a tipografia, que é a dona da tela. Em aparelho
+/// estreito demais pra caber os dois, o mascote sai de cena em vez de virar
+/// uma tirinha.
+class _Headline extends StatelessWidget {
+  const _Headline();
+
+  /// Precisa estar declarado no `pubspec.yaml` (ver `flutter: assets:`).
+  static const _asset = 'assets/img/mascote/mascote.png';
+
+  /// Abaixo disso o mascote fica irreconhecível — melhor não desenhar.
+  static const _minWidth = 64.0;
+
+  /// Largura útil do [ScribbleMark] sob o "HOJE?" (168 de traço deslocado
+  /// 4px pra esquerda). Entra na conta pro mascote não encostar no risco.
+  static const _scribbleWidth = 164.0;
+
+  /// Respiro entre a manchete e o mascote. É só aqui que se mexe.
+  static const _gap = AppSpacing.xxl;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final style = context.typography.displayHuge;
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+
+    Size measure(String text) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: direction,
+        textScaler: scaler,
+      )..layout();
+      final size = painter.size;
+      painter.dispose();
+      return size;
+    }
+
+    final first = measure('O QUE');
+    final second = measure('TEM');
+    final third = measure('HOJE?');
+
+    final blockHeight = first.height + second.height + third.height;
+    final blockWidth = math.max(
+      math.max(first.width, math.max(second.width, third.width)),
+      _scribbleWidth,
+    );
+
+    final available = MediaQuery.sizeOf(context).width - AppSpacing.screen * 2;
+    final room = available - blockWidth - _gap;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'O QUE\nTEM',
+              style: style.copyWith(color: colors.textPrimary),
+            ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Text('HOJE?', style: style.copyWith(color: colors.ambar)),
+                Positioned(
+                  left: -4,
+                  bottom: -2,
+                  child: ScribbleMark(
+                    shape: ScribbleShape.underline,
+                    color: colors.brasa,
+                    size: const Size(168, 14),
+                    strokeWidth: 3,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        if (room >= _minWidth) ...[
+          const SizedBox(width: _gap),
+          // Expanded em vez de largura fixa: o slot toma todo o resto da
+          // linha, e o centerRight encosta o mascote na borda. O contain
+          // mantém a altura travada na da manchete.
+          Expanded(
+            child: SizedBox(
+              height: blockHeight,
+              child: Image.asset(
+                _asset,
+                fit: BoxFit.contain,
+                alignment: Alignment.centerRight,
+                filterQuality: FilterQuality.medium,
+                // Decorativo: quem lê por leitor de tela já ouviu a manchete.
+                excludeFromSemantics: true,
+                // Asset faltando não derruba o cabeçalho inteiro.
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -502,6 +629,132 @@ class _CategoryRailDelegate extends SliverPersistentHeaderDelegate {
 // -----------------------------------------------------------------------
 // Seções
 // -----------------------------------------------------------------------
+
+/// "Essa semana" em carrossel — o formato que a tela de destaques usava.
+///
+/// Só aparece no lugar do dia vazio. É `PageView` com `viewportFraction`
+/// abaixo de 1 e `padEnds: false`, que é o que deixa a borda do próximo card
+/// à mostra e convida a arrastar.
+///
+/// O avanço automático foi mantido, com três diferenças em relação ao
+/// original: o timer é anulável e cancelado no `dispose` (não explode se a
+/// tela morrer antes do primeiro tick), ele reinicia a contagem quando o
+/// usuário arrasta — em vez de puxar o card da mão dele no meio do gesto — e
+/// a volta pro começo é `jumpToPage`, não `animateToPage`: animar do último
+/// pro primeiro é o que fazia o carrossel rebobinar passando por todos os
+/// cards de trás pra frente.
+class _WeekCarousel extends StatefulWidget {
+  final int index;
+  final List<EventModel> events;
+  final String subtitle;
+
+  const _WeekCarousel({
+    required this.index,
+    required this.events,
+    required this.subtitle,
+  });
+
+  @override
+  State<_WeekCarousel> createState() => _WeekCarouselState();
+}
+
+class _WeekCarouselState extends State<_WeekCarousel> {
+  /// Altura do card da semana — a mesma da tela de destaques original.
+  static const _height = 270.0;
+  static const _interval = Duration(seconds: 4);
+  static const _transition = Duration(milliseconds: 700);
+
+  final _controller = PageController(viewportFraction: 0.95);
+  Timer? _timer;
+  int _page = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _restart();
+  }
+
+  @override
+  void didUpdateWidget(covariant _WeekCarousel old) {
+    super.didUpdateWidget(old);
+    // A lista muda quando o filtro de categoria muda, e o índice atual pode
+    // acabar apontando pra fora dela.
+    if (old.events.length != widget.events.length) {
+      _page = _page.clamp(0, math.max(0, widget.events.length - 1));
+      _restart();
+    }
+  }
+
+  void _restart() {
+    _timer?.cancel();
+    if (widget.events.length < 2) return;
+    _timer = Timer.periodic(_interval, (_) => _advance());
+  }
+
+  void _advance() {
+    if (!mounted || !_controller.hasClients) return;
+    // Quem desligou animações no sistema não quer carrossel andando sozinho.
+    if (MediaQuery.disableAnimationsOf(context)) return;
+
+    final next = _page + 1;
+    if (next >= widget.events.length) {
+      _controller.jumpToPage(0);
+      _page = 0;
+      return;
+    }
+    _controller.animateToPage(
+      next,
+      duration: _transition,
+      curve: Curves.easeInOut,
+    );
+    _page = next;
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            index: widget.index,
+            eyebrow: 'ESSA SEMANA',
+            title: 'Dá pra se planejar',
+            subtitle: widget.subtitle,
+            onActionTap: () =>
+                Navigator.pushNamed(context, AppRoutes.eventList),
+          ),
+          SizedBox(
+            height: _height,
+            child: NotificationListener<UserScrollNotification>(
+              // Mão no carrossel zera a contagem: o próximo salto automático
+              // só vem 4s depois que a pessoa parou de mexer.
+              onNotification: (_) {
+                _restart();
+                return false;
+              },
+              child: PageView.builder(
+                padEnds: false,
+                controller: _controller,
+                onPageChanged: (i) => _page = i,
+                itemCount: widget.events.length,
+                itemBuilder: (context, i) =>
+                    WeeklyEvents(evento: widget.events[i]),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _NearbySection extends StatelessWidget {
   final int index;
@@ -662,9 +915,9 @@ class _WeekSection extends StatelessWidget {
 // Estados
 // -----------------------------------------------------------------------
 
-/// Não há nada hoje (ou nada hoje **nessa categoria**). O texto muda conforme
-/// o motivo, porque "nada por aqui" sem explicar o filtro ativo faz o usuário
-/// achar que o app está quebrado.
+/// Último recurso: não há nada hoje **nem** na semana (ou nada nessa
+/// categoria). O texto muda conforme o motivo, porque "nada por aqui" sem
+/// explicar o filtro ativo faz o usuário achar que o app está quebrado.
 class _NothingToday extends StatelessWidget {
   final String? category;
 
@@ -675,10 +928,10 @@ class _NothingToday extends StatelessWidget {
     return VibesterState(
       headline: 'Hoje tá quieto',
       message: category == null
-          ? 'Nenhum evento marcado pra hoje ainda. Rola pra baixo pra ver o '
-                'que tem essa semana, ou dá uma olhada nos lugares em alta.'
-          : 'Nenhum rolê de $category hoje. Tira o filtro pra ver o resto do '
-                'que tá rolando.',
+          ? 'Nenhum evento marcado pra hoje nem pra essa semana. Dá uma '
+                'olhada nos lugares em alta enquanto isso.'
+          : 'Nenhum rolê de $category por aqui. Tira o filtro pra ver o resto '
+                'do que tá rolando.',
       icon: Icons.nightlight_outlined,
     );
   }

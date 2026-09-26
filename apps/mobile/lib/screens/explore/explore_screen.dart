@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:diacritic/diacritic.dart';
 import 'package:flutter/material.dart';
 import 'package:mobile/models/event/event_model.dart';
+import 'package:mobile/models/place/place_category_covers.dart';
 import 'package:mobile/models/place/place_model.dart';
 import 'package:mobile/models/user/user_model.dart';
 import 'package:mobile/providers/events/events_list_provider.dart';
@@ -66,16 +67,8 @@ class ExploreScreenState extends State<ExploreScreen> {
   bool _loadingUsers = false;
   String? _usersError;
 
-  /// Categorias com imagem de capa (assets do produto). Os rótulos batem com
-  /// `PlaceModel.categoria` vindo da API, que é o que permite filtrar.
-  static const _categories = [
-    ('Balada', 'assets/img/baladas.jpg'),
-    ('Bar', 'assets/img/bares.jpg'),
-    ('Restaurantes', 'assets/img/restaurantes.jpg'),
-    ('Lounges', 'assets/img/lounges.jpg'),
-    ('Eventos', 'assets/img/eventos.jpg'),
-    ('Entretenimento', 'assets/img/entretenimento.jpg'),
-  ];
+  /// Categorias com imagem de capa — ver `placeCategoryCovers`.
+  static const _categories = placeCategoryCovers;
 
   @override
   void initState() {
